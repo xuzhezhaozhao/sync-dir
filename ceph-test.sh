@@ -2,7 +2,7 @@
 
 set -e
 
-thread=512
+thread=64
 runtime=60
 mods=( "write" "seq" "rand" )
 

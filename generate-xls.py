@@ -80,7 +80,8 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0):
 if __name__ == '__main__':
     workbook = xlwt.Workbook()
     sheet = workbook.add_sheet('ceph-results')
-    generate_xls(128, 60, 0, 0)
-    generate_xls(512, 60, 15, 0)
-    generate_xls(1024, 60, 30, 0)
+    generate_xls(64, 60, 0, 0)
+    generate_xls(128, 60, 15, 0)
+    generate_xls(512, 60, 30, 0)
+    generate_xls(1024, 60, 45, 0)
     workbook.save('/home/admin/sync-dir/ceph-results.xls')
