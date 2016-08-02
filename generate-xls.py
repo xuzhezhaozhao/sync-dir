@@ -1,5 +1,8 @@
 import xlwt
 import commands
+import os
+
+data_dir = "/home/admin/ceph-test-data"
 
 def generate_xls(thread, runtime = 60, row = 0, col = 0):
     # add heads
@@ -36,6 +39,7 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0):
             for i in range(4, 12):
                 filename = "ceph_bench" + str(i) +  "_" + mod + "_" + "thread" + str(thread) + "_"  + "block" + str(b) + \
                             "_" + "runtime" + str(runtime) + ".out"
+                filename = os.path.join(data_dir, filename)
                 
                 cmd_bandwidth = "grep 'Bandwidth (MB/sec):' " + filename + " | awk '{ printf $3}'"
                 cmd_latency   = "grep 'Average Latency:' "    + filename + " | awk '{ printf $3}'"
@@ -77,5 +81,6 @@ if __name__ == '__main__':
     workbook = xlwt.Workbook()
     sheet = workbook.add_sheet('ceph-results')
     generate_xls(128, 60, 0, 0)
-    generate_xls(1024, 60, 15, 0)
+    generate_xls(512, 60, 15, 0)
+    generate_xls(1024, 60, 30, 0)
     workbook.save('/home/admin/sync-dir/ceph-results.xls')
