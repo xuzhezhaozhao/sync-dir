@@ -10,6 +10,13 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0):
                 "Bandwidth (seq read)",  "Latency (seq read)", "IOPS (seq read)",
                 "Bandwidth (rand read)",  "Latency (rand read)", "IOPS (rand read)",
             ]
+    sheet.col(col).width = 256*20
+    sheet.write(row, col, "concurrent num")
+    col += 1
+    sheet.write(row, col, thread)
+    row += 1
+    col = begin_col
+
     for i in range(col, col+len(heads)):
         # set column width
         sheet.col(i).width = 256*20
