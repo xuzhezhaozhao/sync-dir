@@ -2,23 +2,28 @@
 
 set -e
 
-thread=64
-runtime=60
+threads=( 1 2 4 8 16 32 64 128 256 )
 mods=( "write" "seq" "rand" )
+runtime=10
+for thread in ${threads[@]}
+do
+    for (( block=4*1024; block<=16*1024*1024; block=block*2 ))
+    do
+        for mod in ${mods[@]}
+        do
+            for i in `seq 4 11`
+            do
+                let bk=block/1024
+                prefix=ceph_bench${i}_${mod}_thread${thread}_block${bk}_runtime${runtime}
+                {
+                    ssh node${i} "rados bench -p bench${i} ${runtime} ${mod} -b ${block} -t ${thread}  --no-cleanup > ${prefix}.out 2>${prefix}.err"  && sudo echo 3 | sudo tee /proc/sys/vm/drop_caches && sudo sync &&  echo -e `date`  "\n" "${prefix} done!"
+                } &
+                echo `date`
+                echo "${prefix} started"
+            done
+            wait
+            sleep 5
+        done
+    done
+done
 
-for (( block=4*1024; block<=4*1024*1024; block=block*2 ))
-do
-for mod in ${mods[@]}
-do
-for i in `seq 4 11`
-do
-let bk=block/1024
-prefix=ceph_bench${i}_${mod}_thread${thread}_block${bk}_runtime${runtime}
-{
-    ssh node${i} "rados bench -p bench${i} ${runtime} ${mod} -b ${block} -t ${thread} --no-cleanup > ${prefix}.out 2>${prefix}.err" && echo "${prefix} done!"
-} &
-echo "${prefix} started"
-done
-wait
-done
-done

@@ -4,7 +4,7 @@ import os
 
 data_dir = "/home/admin/ceph-test-data"
 
-def generate_xls(thread, runtime = 60, row = 0, col = 0):
+def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
     # add heads
     begin_col = col
     heads = [ 
@@ -38,7 +38,11 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0):
             cnt = 0
             for i in range(4, 12):
                 filename = "ceph_bench" + str(i) +  "_" + mod + "_" + "thread" + str(thread) + "_"  + "block" + str(b) + \
-                            "_" + "runtime" + str(runtime) + ".out"
+                            "_" + "runtime" + str(runtime)
+                if singlenode:
+                    filename += "_singlenode"
+                filename += ".out"
+
                 filename = os.path.join(data_dir, filename)
                 
                 cmd_bandwidth = "grep 'Bandwidth (MB/sec):' " + filename + " | awk '{ printf $3}'"
@@ -80,8 +84,11 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0):
 if __name__ == '__main__':
     workbook = xlwt.Workbook()
     sheet = workbook.add_sheet('ceph-results')
-    generate_xls(64, 60, 0, 0)
-    generate_xls(128, 60, 15, 0)
-    generate_xls(512, 60, 30, 0)
-    generate_xls(1024, 60, 45, 0)
+    threads = [2**x for x in range(0,4)]
+    row = 0
+    for thread in threads: 
+        generate_xls(thread, 10, row, 0)
+        row += 15
+
+
     workbook.save('/home/admin/sync-dir/ceph-results.xls')
