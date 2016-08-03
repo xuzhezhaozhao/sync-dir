@@ -93,7 +93,7 @@ if __name__ == '__main__':
         generate_xls(thread, 10, row, 0)
         row += 18
 
-    sheet.write(row, 0, singlenode)
+    sheet.write(row, 0, 'singlenode')
     row += 1
     generate_xls(64, 5, row, 0, 1)
 
