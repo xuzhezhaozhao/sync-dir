@@ -28,7 +28,7 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
     # fill data
     mods=["write", "seq", "rand"]
     row += 1
-    blocks = [2**x for x in range(2,13)]
+    blocks = [2**x for x in range(2,15)]
     for b in blocks:
         sheet.write(row, col, b)
         col += 1
