@@ -3,6 +3,9 @@ import commands
 import os
 
 data_dir = "/home/admin/ceph-test-data"
+blocks = [2**x for x in range(2,15)]
+mods=["write", "seq", "rand"]
+threads = [2**x for x in range(0,8)]
 
 def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
     # add heads
@@ -26,9 +29,7 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
         sheet.write(row, i, heads[i])
 
     # fill data
-    mods=["write", "seq", "rand"]
     row += 1
-    blocks = [2**x for x in range(2,15)]
     for b in blocks:
         sheet.write(row, col, b)
         col += 1
@@ -87,14 +88,16 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
 if __name__ == '__main__':
     workbook = xlwt.Workbook()
     sheet = workbook.add_sheet('ceph-results')
-    threads = [2**x for x in range(0,4)]
+    runtime = 120
     row = 0
     for thread in threads: 
-        generate_xls(thread, 10, row, 0)
+        generate_xls(thread, runtime, row, 0)
         row += 18
 
-    sheet.write(row, 0, 'singlenode')
+    sheet.write(row, 0, 'singlenode: node4')
     row += 1
-    generate_xls(64, 5, row, 0, 1)
+    for thread in threads:
+        generate_xls(thread, runtime, row, 0, 1)
+        row += 18
 
     workbook.save('/home/admin/sync-dir/ceph-results.xls')
