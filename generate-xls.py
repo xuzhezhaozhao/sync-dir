@@ -91,8 +91,10 @@ if __name__ == '__main__':
     row = 0
     for thread in threads: 
         generate_xls(thread, 10, row, 0)
-        row += 15
+        row += 18
 
+    sheet.write(row, 0, singlenode)
+    row += 1
     generate_xls(64, 5, row, 0, 1)
 
     workbook.save('/home/admin/sync-dir/ceph-results.xls')
