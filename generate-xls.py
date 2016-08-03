@@ -37,6 +37,9 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
             sum_latency = 0
             cnt = 0
             for i in range(4, 12):
+                if singlenode and i > 4:
+                    break
+
                 filename = "ceph_bench" + str(i) +  "_" + mod + "_" + "thread" + str(thread) + "_"  + "block" + str(b) + \
                             "_" + "runtime" + str(runtime)
                 if singlenode:
@@ -90,5 +93,6 @@ if __name__ == '__main__':
         generate_xls(thread, 10, row, 0)
         row += 15
 
+    generate_xls(64, 5, row, 0, 1)
 
     workbook.save('/home/admin/sync-dir/ceph-results.xls')

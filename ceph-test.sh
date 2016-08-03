@@ -4,7 +4,7 @@ set -e
 
 threads=( 1 2 4 8 16 32 64 128 256 )
 mods=( "write" "seq" "rand" )
-runtime=10
+runtime=120
 for thread in ${threads[@]}
 do
     for (( block=4*1024; block<=16*1024*1024; block=block*2 ))
