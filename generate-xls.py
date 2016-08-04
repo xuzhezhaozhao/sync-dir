@@ -80,6 +80,8 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
             col += 1
             sheet.write(row, col, avg_iops)
             col += 1
+            # one blank col
+            col += 1
 
         row += 1
         col = begin_col
