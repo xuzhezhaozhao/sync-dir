@@ -13,7 +13,9 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
     heads = [ 
                 "Block size (KB)", 
                 "Bandwidth (wirte)",  "Latency (write)", "IOPS (write)",
+                "",
                 "Bandwidth (seq read)",  "Latency (seq read)", "IOPS (seq read)",
+                "",
                 "Bandwidth (rand read)",  "Latency (rand read)", "IOPS (rand read)",
             ]
     sheet.col(col).width = 256*20
