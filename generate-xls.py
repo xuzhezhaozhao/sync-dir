@@ -13,9 +13,7 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
     heads = [ 
                 "Block size (KB)", 
                 "Bandwidth (wirte)",  "Latency (write)", "IOPS (write)",
-                "",
                 "Bandwidth (seq read)",  "Latency (seq read)", "IOPS (seq read)",
-                "",
                 "Bandwidth (rand read)",  "Latency (rand read)", "IOPS (rand read)",
             ]
     sheet.col(col).width = 256*20
@@ -81,8 +79,6 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
             sheet.write(row, col, avg_latency)
             col += 1
             sheet.write(row, col, avg_iops)
-            col += 1
-            # one blank col
             col += 1
 
         row += 1
