@@ -22,7 +22,7 @@ do
                 echo "${prefix} started"
             done
             wait
-            sleep 5
+            sleep 2
         done
     done
 done
