@@ -90,6 +90,8 @@ if __name__ == '__main__':
     sheet = workbook.add_sheet('ceph-results')
     runtime = 120
     row = 0
+    sheet.write(row, 0, 'multi node: node4~11')
+    row += 1
     for thread in threads: 
         generate_xls(thread, runtime, row, 0)
         row += 18
