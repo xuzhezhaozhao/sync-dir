@@ -3,18 +3,19 @@ import commands
 import os
 
 data_dir = "/home/admin/ceph-test-data"
-blocks = [2**x for x in range(2,15)]
+blocks = [2**x for x in range(2,13)]
 mods=["write", "seq", "rand"]
 threads = [2**x for x in range(0,9)]
+runtime = 100
 
 def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
     # add heads
     begin_col = col
     heads = [ 
                 "Block size (KB)", 
-                "Bandwidth (wirte)",  "Latency (write)", "IOPS (write)",
-                "Bandwidth (seq read)",  "Latency (seq read)", "IOPS (seq read)",
-                "Bandwidth (rand read)",  "Latency (rand read)", "IOPS (rand read)",
+                "Throughput-wirte(MB/s)",  "Latency-write(ms)", "IOPS-write",
+                "Bandwidth-seqread(MB/s)",  "Latency-seqread(ms)", "IOPS-seqread",
+                "Bandwidth-randread(MB/s)",  "Latency-randread(ms)", "IOPS-randread",
             ]
     sheet.col(col).width = 256*20
     sheet.write(row, col, "concurrent num")
@@ -70,7 +71,7 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
                 sum_latency   += float(latency)
 
             avg_bandwidth = sum_bandwidth*1.0 / cnt
-            avg_latency   = sum_latency*1.0 / cnt
+            avg_latency   = sum_latency*1.0 / cnt*1000
             avg_iops      = avg_bandwidth*1024*1.0 / b
 
             # write data to corresponding cell
@@ -88,7 +89,6 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
 if __name__ == '__main__':
     workbook = xlwt.Workbook()
     sheet = workbook.add_sheet('ceph-results')
-    runtime = 120
     row = 0
     sheet.write(row, 0, 'multi node: node4~11')
     row += 1
