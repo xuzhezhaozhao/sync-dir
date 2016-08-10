@@ -99,7 +99,7 @@ if __name__ == '__main__':
     sheet.write(row, 0, 'singlenode: node4')
     row += 1
     for thread in threads:
-        generate_xls(thread, runtime, row, 0, 1)
+#    generate_xls(thread, runtime, row, 0, 1)
         row += 18
 
     workbook.save('/home/admin/sync-dir/ceph-results.xls')
