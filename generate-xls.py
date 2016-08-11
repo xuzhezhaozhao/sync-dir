@@ -5,7 +5,7 @@ import os
 data_dir = "/home/admin/ceph-test-data"
 blocks = [2**x for x in range(2,13)]
 mods=["write", "seq", "rand"]
-threads = [2**x for x in range(0,9)]
+threads = [2**x for x in range(0,11)]
 runtime = 100
 
 def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):

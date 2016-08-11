@@ -2,7 +2,8 @@
 
 set -e
 
-threads=( 1 2 4 8 16 32 64 128 256 )
+#threads=( 1 2 4 8 16 32 64 128 256 )
+threads=( 512 1024 )
 mods=( "write" "seq" "rand" )
 runtime=100
 for thread in ${threads[@]}
