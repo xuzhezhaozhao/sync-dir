@@ -3,20 +3,24 @@ import commands
 import os
 
 data_dir = "/home/admin/ceph-test-data"
+pangu_result_file = os.path.join(data_dir, "pangu_result.txt")
 blocks = [2**x for x in range(2,13)]
 mods=["write", "seq", "rand"]
 threads = [2**x for x in range(0,11)]
 runtime = 100
 
+
+
+
 def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
-    # add heads
-    begin_col = col
     heads = [ 
                 "Block size (KB)", 
                 "Throughput-wirte(MB/s)",  "Latency-write(ms)", "IOPS-write",
                 "Bandwidth-seqread(MB/s)",  "Latency-seqread(ms)", "IOPS-seqread",
                 "Bandwidth-randread(MB/s)",  "Latency-randread(ms)", "IOPS-randread",
             ]
+    # add heads
+    begin_col = col
     sheet.col(col).width = 256*20
     sheet.write(row, col, "concurrent num")
     col += 1
@@ -85,6 +89,50 @@ def generate_xls(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
         row += 1
         col = begin_col
 
+def generate_xls_for_pangu(thread, runtime = 60, row = 0, col = 0, singlenode = 0):
+    heads = [ 
+                "cocurrents num",
+#"Block size (KB)", 
+                "Throughput-wirte(MB/s)",  "Latency-write(ms)", "IOPS-write",
+                "Bandwidth-seqread(MB/s)",  "Latency-seqread(ms)", "IOPS-seqread",
+                "Bandwidth-randread(MB/s)",  "Latency-randread(ms)", "IOPS-randread",
+            ]
+    begin_col = col
+
+    for i in range(col, col+len(heads)):
+        # set column width
+        sheet.col(i).width = 256*20
+        sheet.write(row, i, heads[i])
+
+    linenum = 0
+    for line in open(pangu_result_file):
+        c = linenum % 6
+        if c == 0:
+            # begin a new record
+            col = begin_col
+            row += 2
+        elif c == 1:
+            # latency
+            latency = line.split()[2]
+            sheet.write(row, col, latency)
+            col += 1
+        elif c == 2:
+            pass
+        elif c == 3:
+            # thoughput
+            thoughput = line.split()[2]
+            sheet.write(row, col, thoughput)
+            col += 1
+        elif c == 4:
+            # qps
+            qps = line.split()[2]
+            sheet.write(row, col, qps)
+        else:
+            pass
+
+        linenum += 1
+
+
 
 if __name__ == '__main__':
     workbook = xlwt.Workbook()
@@ -101,5 +149,7 @@ if __name__ == '__main__':
     for thread in threads:
         generate_xls(thread, runtime, row, 0, 1)
         row += 18
+
+    sheet = workbook.add_sheet('pangu-results')
 
     workbook.save('/home/admin/sync-dir/ceph-results.xls')
