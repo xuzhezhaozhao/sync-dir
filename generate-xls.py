@@ -151,5 +151,6 @@ if __name__ == '__main__':
         row += 18
 
     sheet = workbook.add_sheet('pangu-results')
+    generate_xls_for_pangu(thread, runtime, 0, 0)
 
     workbook.save('/home/admin/sync-dir/ceph-results.xls')
