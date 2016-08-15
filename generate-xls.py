@@ -109,24 +109,25 @@ def generate_xls_for_pangu(thread, runtime = 60, row = 0, col = 0, singlenode = 
         c = linenum % 6
         if c == 0:
             # begin a new record
-            col = begin_col
+            col = begin_col + 1
             row += 2
         elif c == 1:
             # latency
-            latency = line.split()[2]
+            latency = float(line.split()[2])
             sheet.write(row, col, latency)
             col += 1
         elif c == 2:
             pass
         elif c == 3:
             # thoughput
-            thoughput = line.split()[2]
+            thoughput = float(line.split()[2]) / 1024 / 1024
             sheet.write(row, col, thoughput)
             col += 1
         elif c == 4:
             # qps
-            qps = line.split()[2]
+            qps = float(line.split()[2])
             sheet.write(row, col, qps)
+            col += 1
         else:
             pass
 
