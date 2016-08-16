@@ -110,7 +110,7 @@ def generate_xls_for_pangu(thread, runtime = 60, row = 0, col = 0, singlenode = 
         if c == 0:
             # begin a new record
             col = begin_col + 1
-            row += 2
+            row += 1
         elif c == 1:
             # latency
             latency = float(line.split()[2])
