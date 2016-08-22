@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<!-- saved from url=(0037)http://www.atatech.org/articles/50146 -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <title>应用程序内存使用跟踪之内存泄露调查篇</title>
+    <meta name="description" content="">
+    
+    <meta name="viewport" content="width=1100, maximum-scale=1.0, user-scalable=yes">
+    <link rel="stylesheet" href="./应用程序内存使用跟踪之内存泄露调查篇_files/app-b431650f1893c29f864afc4a45d41a6c667feb30.css">
+    <script src="./应用程序内存使用跟踪之内存泄露调查篇_files/app-5437c26b4ed242837fdc2b586475fa38d5c51d43.js" data-main="article/show"></script>
+    <script>require('main')</script>
+    <!--[if lt IE 9]>
+    <script src="/js/html5shiv-3.7.0.min.js"></script>
+    <script src="/js/respond-1.4.2.min.js"></script>
+    <![endif]-->
+      <style type="text/css">.MathJax_Hover_Frame {border-radius: .25em; -webkit-border-radius: .25em; -moz-border-radius: .25em; -khtml-border-radius: .25em; box-shadow: 0px 0px 15px #83A; -webkit-box-shadow: 0px 0px 15px #83A; -moz-box-shadow: 0px 0px 15px #83A; -khtml-box-shadow: 0px 0px 15px #83A; border: 1px solid #A6D ! important; display: inline-block; position: absolute}
+.MathJax_Menu_Button .MathJax_Hover_Arrow {position: absolute; cursor: pointer; display: inline-block; border: 2px solid #AAA; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; -khtml-border-radius: 4px; font-family: 'Courier New',Courier; font-size: 9px; color: #F0F0F0}
+.MathJax_Menu_Button .MathJax_Hover_Arrow span {display: block; background-color: #AAA; border: 1px solid; border-radius: 3px; line-height: 0; padding: 4px}
+.MathJax_Hover_Arrow:hover {color: white!important; border: 2px solid #CCC!important}
+.MathJax_Hover_Arrow:hover span {background-color: #CCC!important}
+</style><style type="text/css">#MathJax_About {position: fixed; left: 50%; width: auto; text-align: center; border: 3px outset; padding: 1em 2em; background-color: #DDDDDD; color: black; cursor: default; font-family: message-box; font-size: 120%; font-style: normal; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 15px; -webkit-border-radius: 15px; -moz-border-radius: 15px; -khtml-border-radius: 15px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_About.MathJax_MousePost {outline: none}
+.MathJax_Menu {position: absolute; background-color: white; color: black; width: auto; padding: 2px; border: 1px solid #CCCCCC; margin: 0; cursor: default; font: menu; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_MenuItem {padding: 2px 2em; background: transparent}
+.MathJax_MenuArrow {position: absolute; right: .5em; padding-top: .25em; color: #666666; font-size: .75em}
+.MathJax_MenuActive .MathJax_MenuArrow {color: white}
+.MathJax_MenuArrow.RTL {left: .5em; right: auto}
+.MathJax_MenuCheck {position: absolute; left: .7em}
+.MathJax_MenuCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuRadioCheck {position: absolute; left: 1em}
+.MathJax_MenuRadioCheck.RTL {right: 1em; left: auto}
+.MathJax_MenuLabel {padding: 2px 2em 4px 1.33em; font-style: italic}
+.MathJax_MenuRule {border-top: 1px solid #CCCCCC; margin: 4px 1px 0px}
+.MathJax_MenuDisabled {color: GrayText}
+.MathJax_MenuActive {background-color: Highlight; color: HighlightText}
+.MathJax_MenuDisabled:focus, .MathJax_MenuLabel:focus {background-color: #E8E8E8}
+.MathJax_ContextMenu:focus {outline: none}
+.MathJax_ContextMenu .MathJax_MenuItem:focus {outline: none}
+#MathJax_AboutClose {top: .2em; right: .2em}
+.MathJax_Menu .MathJax_MenuClose {top: -10px; left: -10px}
+.MathJax_MenuClose {position: absolute; cursor: pointer; display: inline-block; border: 2px solid #AAA; border-radius: 18px; -webkit-border-radius: 18px; -moz-border-radius: 18px; -khtml-border-radius: 18px; font-family: 'Courier New',Courier; font-size: 24px; color: #F0F0F0}
+.MathJax_MenuClose span {display: block; background-color: #AAA; border: 1.5px solid; border-radius: 18px; -webkit-border-radius: 18px; -moz-border-radius: 18px; -khtml-border-radius: 18px; line-height: 0; padding: 8px 0 6px}
+.MathJax_MenuClose:hover {color: white!important; border: 2px solid #CCC!important}
+.MathJax_MenuClose:hover span {background-color: #CCC!important}
+.MathJax_MenuClose:hover:focus {outline: none}
+</style><style type="text/css">.MathJax_Preview .MJXf-math {color: inherit!important}
+</style><style type="text/css">.MJX_Assistive_MathML {position: absolute!important; top: 0; left: 0; clip: rect(1px, 1px, 1px, 1px); padding: 1px 0 0 0!important; border: 0!important; height: 1px!important; width: 1px!important; overflow: hidden!important; display: block!important; -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none}
+.MJX_Assistive_MathML.MJX_Assistive_MathML_Block {width: 100%!important}
+</style><style type="text/css">#MathJax_Zoom {position: absolute; background-color: #F0F0F0; overflow: auto; display: block; z-index: 301; padding: .5em; border: 1px solid black; margin: 0; font-weight: normal; font-style: normal; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; -webkit-box-sizing: content-box; -moz-box-sizing: content-box; box-sizing: content-box; box-shadow: 5px 5px 15px #AAAAAA; -webkit-box-shadow: 5px 5px 15px #AAAAAA; -moz-box-shadow: 5px 5px 15px #AAAAAA; -khtml-box-shadow: 5px 5px 15px #AAAAAA; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_ZoomOverlay {position: absolute; left: 0; top: 0; z-index: 300; display: inline-block; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+#MathJax_ZoomFrame {position: relative; display: inline-block; height: 0; width: 0}
+#MathJax_ZoomEventTrap {position: absolute; left: 0; top: 0; z-index: 302; display: inline-block; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+</style><style type="text/css">.MathJax_Preview {color: #888}
+#MathJax_Message {position: fixed; left: 1em; bottom: 1.5em; background-color: #E6E6E6; border: 1px solid #959595; margin: 0px; padding: 2px 8px; z-index: 102; color: black; font-size: 80%; width: auto; white-space: nowrap}
+#MathJax_MSIE_Frame {position: absolute; top: 0; left: 0; width: 0px; z-index: 101; border: 0px; margin: 0px; padding: 0px}
+.MathJax_Error {color: #CC0000; font-style: italic}
+</style><style type="text/css">.MJXp-script {font-size: .8em}
+.MJXp-right {-webkit-transform-origin: right; -moz-transform-origin: right; -ms-transform-origin: right; -o-transform-origin: right; transform-origin: right}
+.MJXp-bold {font-weight: bold}
+.MJXp-italic {font-style: italic}
+.MJXp-scr {font-family: MathJax_Script,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-frak {font-family: MathJax_Fraktur,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-sf {font-family: MathJax_SansSerif,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-cal {font-family: MathJax_Caligraphic,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-mono {font-family: MathJax_Typewriter,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-largeop {font-size: 150%}
+.MJXp-largeop.MJXp-int {vertical-align: -.2em}
+.MJXp-math {display: inline-block; line-height: 1.2; text-indent: 0; font-family: 'Times New Roman',Times,STIXGeneral,serif; white-space: nowrap; border-collapse: collapse}
+.MJXp-display {display: block; text-align: center; margin: 1em 0}
+.MJXp-math span {display: inline-block}
+.MJXp-box {display: block!important; text-align: center}
+.MJXp-box:after {content: " "}
+.MJXp-rule {display: block!important; margin-top: .1em}
+.MJXp-char {display: block!important}
+.MJXp-mo {margin: 0 .15em}
+.MJXp-mfrac {margin: 0 .125em; vertical-align: .25em}
+.MJXp-denom {display: inline-table!important; width: 100%}
+.MJXp-denom > * {display: table-row!important}
+.MJXp-surd {vertical-align: top}
+.MJXp-surd > * {display: block!important}
+.MJXp-script-box > *  {display: table!important; height: 50%}
+.MJXp-script-box > * > * {display: table-cell!important; vertical-align: top}
+.MJXp-script-box > *:last-child > * {vertical-align: bottom}
+.MJXp-script-box > * > * > * {display: block!important}
+.MJXp-mphantom {visibility: hidden}
+.MJXp-munderover {display: inline-table!important}
+.MJXp-over {display: inline-block!important; text-align: center}
+.MJXp-over > * {display: block!important}
+.MJXp-munderover > * {display: table-row!important}
+.MJXp-mtable {vertical-align: .25em; margin: 0 .125em}
+.MJXp-mtable > * {display: inline-table!important; vertical-align: middle}
+.MJXp-mtr {display: table-row!important}
+.MJXp-mtd {display: table-cell!important; text-align: center; padding: .5em 0 0 .5em}
+.MJXp-mtr > .MJXp-mtd:first-child {padding-left: 0}
+.MJXp-mtr:first-child > .MJXp-mtd {padding-top: 0}
+.MJXp-mlabeledtr {display: table-row!important}
+.MJXp-mlabeledtr > .MJXp-mtd:first-child {padding-left: 0}
+.MJXp-mlabeledtr:first-child > .MJXp-mtd {padding-top: 0}
+.MJXp-merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 1px 3px; font-style: normal; font-size: 90%}
+.MJXp-scale0 {-webkit-transform: scaleX(.0); -moz-transform: scaleX(.0); -ms-transform: scaleX(.0); -o-transform: scaleX(.0); transform: scaleX(.0)}
+.MJXp-scale1 {-webkit-transform: scaleX(.1); -moz-transform: scaleX(.1); -ms-transform: scaleX(.1); -o-transform: scaleX(.1); transform: scaleX(.1)}
+.MJXp-scale2 {-webkit-transform: scaleX(.2); -moz-transform: scaleX(.2); -ms-transform: scaleX(.2); -o-transform: scaleX(.2); transform: scaleX(.2)}
+.MJXp-scale3 {-webkit-transform: scaleX(.3); -moz-transform: scaleX(.3); -ms-transform: scaleX(.3); -o-transform: scaleX(.3); transform: scaleX(.3)}
+.MJXp-scale4 {-webkit-transform: scaleX(.4); -moz-transform: scaleX(.4); -ms-transform: scaleX(.4); -o-transform: scaleX(.4); transform: scaleX(.4)}
+.MJXp-scale5 {-webkit-transform: scaleX(.5); -moz-transform: scaleX(.5); -ms-transform: scaleX(.5); -o-transform: scaleX(.5); transform: scaleX(.5)}
+.MJXp-scale6 {-webkit-transform: scaleX(.6); -moz-transform: scaleX(.6); -ms-transform: scaleX(.6); -o-transform: scaleX(.6); transform: scaleX(.6)}
+.MJXp-scale7 {-webkit-transform: scaleX(.7); -moz-transform: scaleX(.7); -ms-transform: scaleX(.7); -o-transform: scaleX(.7); transform: scaleX(.7)}
+.MJXp-scale8 {-webkit-transform: scaleX(.8); -moz-transform: scaleX(.8); -ms-transform: scaleX(.8); -o-transform: scaleX(.8); transform: scaleX(.8)}
+.MJXp-scale9 {-webkit-transform: scaleX(.9); -moz-transform: scaleX(.9); -ms-transform: scaleX(.9); -o-transform: scaleX(.9); transform: scaleX(.9)}
+.MathJax_PHTML .noError {vertical-align: ; font-size: 90%; text-align: left; color: black; padding: 1px 3px; border: 1px solid}
+</style></head>
+  <body class=""><div id="MathJax_Message" style="display: none;"></div>
+
+              <header>
+  <div class="navbar navbar-default">
+    <div class="container">
+        <ul class="nav navbar-nav">
+          <li><a href="http://www.atatech.org/square/">首页</a></li>
+          <li><a href="http://www.atatech.org/articles/?sort=yuan">文章</a></li>
+          <li><a href="http://www.atatech.org/ask">问答</a></li>
+          <li><a href="http://www.atatech.org/edu/lesson/">课程</a></li>
+          <li><a href="http://www.atatech.org/rookie/nav/">百宝箱</a></li>
+          <li class="divider"></li>
+          <li><a href="http://www.atatech.org/groups/">圈子</a></li>
+          <li><a href="http://www.atatech.org/teams/">团队博客</a></li>
+          <li><a href="http://www.atatech.org/rookie/">新人专区</a></li>
+          <li class="divider"></li>
+          <li><a href="http://www.atatech.org/databoard/" target="_blank">数据看板</a></li>
+          <li><a href="http://www.atatech.org/field/security/">安全领域</a></li>
+          <li><a href="http://www.atatech.org/specials/49engine/" target="_blank">技术战役</a></li>
+        </ul>
+        <ul class="nav navbar-nav pull-right">
+
+                                        <li><a href="http://www.atatech.org/notifications/">消息<em class="label label-danger">41</em></a></li>
+          <li><a href="http://www.atatech.org/feed/">动态</a></li>
+          <li class="divider"></li>
+          <li class="dropdown">
+            <a href="http://www.atatech.org/users/221738#information" class="navbar-avatar" data-toggle="dropdown">
+              <img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_d12244eb690f38f0765d101fc4ddc50b.png_40x40" width="20" height="20" alt="钊帅" class="img-circle">
+              <span>&nbsp;钊帅</span>
+              <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu" role="menu" style="display: none;">
+              <li>
+                <a href="http://www.atatech.org/users/221738/own#information">
+                <span class="glyphicon glyphicon-edit"></span>
+                <span>我的文章</span>
+                </a>
+              </li>
+              <li>
+                <a href="http://www.atatech.org/users/221738/ask#information">
+                <span class="glyphicon glyphicon-question-sign"></span>
+                <span>我的问题</span>
+                </a>
+              </li>
+              <li>
+                <a href="http://www.atatech.org/users/221738/mark#information">
+                <span class="glyphicon glyphicon-star-empty"></span>
+                <span>我的收藏</span>
+                </a>
+              </li>
+              <li>
+                <a href="http://www.atatech.org/users/221738/groups">
+                <span class="glyphicon glyphicon-record"></span>
+                <span>我的圈子</span>
+                </a>
+              </li>
+              <li>
+                <a href="http://www.atatech.org/teams">
+                <span class="glyphicon glyphicon-list-alt"></span>
+                <span>我的博客</span>
+                </a>
+              </li>
+              
+                            <li>
+                <a href="http://www.atatech.org/settings/">
+                <span class="glyphicon glyphicon-cog"></span>
+                <span>个人设置</span>
+                </a>
+              </li>
+                            <li class="divider"></li>
+              <li>
+                <a href="http://www.atatech.org/logout" data-method="post">
+                <span class="glyphicon glyphicon-log-out"></span>
+                <span>退出</span>
+                </a>
+              </li>
+            </ul><!-- /.dropdown -->
+          </li>
+          <li class="dropdown quick-search">
+            <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-search"></span></button>
+            <div class="dropdown-menu form-group" role="menu" style="display: none;">
+              <form action="http://www.atatech.org/search" method="get" class="quick-form js-active-on-valid">
+                    <input type="hidden" name="type" value="ARTICLE">
+                    <input type="text" name="q" class="form-control" placeholder="全站搜索" required="">
+                    <button type="submit" class="quick_btn"></button>
+              </form>
+            </div>
+          </li>
+        </ul>
+    </div>
+  </div>
+  
+  </header>                <div class="container">
+          </div>
+        
+
+
+<div class="container"><div class="_article-container">
+    <div class="_article-ribbons hidden-xs">
+                <div class="_article-ribbon _article-ribbon-info">
+            <span class="glyphicon glyphicon-leaf"></span>
+      <span class="_article-ribbon-text">作者原创</span>
+    </div>
+          </div>
+  <div class="_article-box" role="main">
+    <article class="_article">
+      <header class="heading">
+        <h1 class="title clearfix unsafe">
+          <span class="highlight">
+            应用程序内存使用跟踪之内存泄露调查篇
+                      </span>
+        </h1>
+        <div class="infos clearfix">
+          <a href="http://www.atatech.org/users/68427" class="info" title="谋天"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_bdffd8ee443a9507462b7015aa990494.png_80x80" width="32" height="32" alt="谋天" class="img-user"><span>&nbsp;谋天</span></a>                    <span class="info">浏览 905</span>
+          <span class="info">
+                        <time class="" datetime="2016-03-02T10:20:09+08:00">2016-03-02 10:20:09</time>
+          </span>
+                    
+          <div class="pull-right">
+                        
+                        
+                      </div>
+        </div>
+
+                <div class="labels">
+    <form accept-charset="UTF-8" action="http://www.atatech.org/articles/50146/tags" autocomplete="off" method="post" data-remote="true" data-done="$(this).closest(&#39;.labels&#39;).replaceWith(r);$.alert(&#39;修改成功&#39;, &#39;success&#39;)" style="display:none">
+    <input type="hidden" name="_method" value="put">
+    <div class="form-group">
+      <input type="text" name="tags" class="form-control selectized" value="分布式系统与计算 数据存储与数据库 " tabindex="-1" style="display: none;"><div class="selectize-control form-control multi plugin-remove_button"><div class="selectize-input items not-full has-options has-items"><div data-value="分布式系统与计算" class="item">分布式系统与计算<a href="javascript:void(0)" class="remove" tabindex="-1" title="Remove">×</a></div><div data-value="数据存储与数据库" class="item">数据存储与数据库<a href="javascript:void(0)" class="remove" tabindex="-1" title="Remove">×</a></div><input type="text" autocomplete="off" tabindex="" style="width: 4px;"></div><div class="selectize-dropdown form-control multi plugin-remove_button" style="display: none;"><div class="selectize-dropdown-content"><div data-value="Java核心技术" data-selectable="" class="option active">Java核心技术</div><div data-value="Java" data-selectable="" class="option">Java</div><div data-value="架构" data-selectable="" class="option">架构</div><div data-value="前端与交互设计" data-selectable="" class="option">前端与交互设计</div><div data-value="算法" data-selectable="" class="option">算法</div><div data-value="编程语言" data-selectable="" class="option">编程语言</div><div data-value="测试技术" data-selectable="" class="option">测试技术</div></div></div></div>
+    </div>
+    <div class="form-group text-right">
+      <button type="button" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;.labels&#39;).children().toggle()">取消</button>
+      <button type="submit" class="btn btn-primary btn-sm">更新</button>
+    </div>
+  </form>
+    
+  <div>
+    <a href="http://www.atatech.org/search?q=%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E4%B8%8E%E8%AE%A1%E7%AE%97&amp;type=INSIDE_ARTICLE_TAG" class="label label-ata">分布式系统与计算</a><a href="http://www.atatech.org/search?q=%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E4%B8%8E%E6%95%B0%E6%8D%AE%E5%BA%93&amp;type=INSIDE_ARTICLE_TAG" class="label label-ata">数据存储与数据库</a>        <button type="button" id="edit-tags" class="btn btn-default btn-xs" onclick="$(this).closest(&#39;.labels&#39;).children().toggle()">
+      <span class="glyphicon glyphicon-pencil"></span>
+      修改标签
+    </button>
+    <a href="http://www.atatech.org/articles/50146/tags/history" class="btn btn-default btn-xs" data-toggle="modal" data-target="#modal-tag-history">
+      <span class="glyphicon glyphicon-time"></span>
+      标签历史
+    </a>
+      </div>
+</div>
+
+              </header>
+      
+      <div class="content unsafe">
+        
+<p>C/C++程序的内存使用方式非常灵活，完全由编程人员控制，这虽然能提高内存的使用效率，但是在复杂系统中因为使用错误，也会造成很多不易调查的程序错误，常见的比如内存泄露、对象double free、访问地址越界等。为了解决这些问题，多种内存分析工具被开发出来，比如Valgrind、Heap Checker/Profiler等。</p>
+<p>Valgrind是一套Linux下，开放源代码的仿真调试工具的集合。Memcheck是valgrind应用最广泛的工具，能够发现开发中绝大多数内存错误使用情况，比如：使用未初始化的内存，使用已经释放了的内存，内存访问越界等。但是因为valgrind的工作方式，导致程序性能会下降10-50倍<a href="http://valgrind.org/docs/manual/manual-core.html">http://valgrind.org/docs/manual/manual-core.html</a>。因为其对性能的影响，降低了其在复杂系统中的可用性。</p>
+<p>Google-perftools是Google提供的性能测试和优化工具，其中tcmalloc是一个高效的内存管理器，实测性能显著高于glibc的malloc。tcmalloc整合的heap checker和heap profiler工具提供了完整的内存检查及profiling功能。heap checker主要被用来检查程序中是否有内存泄露及内存泄露点信息；heap profiler可以用于内存性能及空间热点分析，帮助分析内存的使用分布情况。但heap checker和heap profiler都需要调用backtrace拿到调用栈信息，而这个操作是一个慢操作，所以tcmalloc使用采样的方式降低checker及profiler对应用程序性能的影响，而采样就可能存在偏差，从而影响结果的可靠性。</p>
+<p>为了调查内存问题，我们修改了tcmalloc的实现，在其中加入了完整的内存使用跟踪信息，主要包含以下几个特性：<br>
+1） 内存地址管理：提供应用程序中每块内存分配块的属主及使用情况<br>
+2） 内存分配栈管理：管理每个使用中内存块的分配函数调用栈及被释放内存块的释放函数调用栈</p>
+<p>本文附带了一个动态链接版本及一个静态链接版本的tcmalloc修改库，用户可以在编译时把库链接进应用程序；对于采用动态链接的应用程序，用户也可以在运行时通过注入的方式把动态链接库直接注入应用程序。而后在应用程序运行的过程中，新内存管理函数会记录内存的使用情况。对于每个内存分配申请，新内存管理函数会在每个内存分配块的末尾添加16个字节的TAG以记录额外的信息，TAG的数据结构如下：</p>
+<pre><code data-language="" class="hljs cpp"><span class="hljs-keyword">struct</span> memory_tracer_tag
+{
+    <span class="hljs-keyword">uint64_t</span> allocate_or_free_tid:<span class="hljs-number">16</span>;
+    <span class="hljs-keyword">uint64_t</span> memory_tracer_tag_marker:<span class="hljs-number">40</span>;
+    <span class="hljs-keyword">uint64_t</span> tcmalloc_class_id:<span class="hljs-number">8</span>;
+    <span class="hljs-keyword">uint64_t</span> allocate_or_free_marker:<span class="hljs-number">8</span>;
+    <span class="hljs-keyword">uint64_t</span> allocate_or_free_backtrace_id:<span class="hljs-number">24</span>;
+    <span class="hljs-keyword">uint64_t</span> allocate_or_free_timestamp:<span class="hljs-number">32</span>;
+};
+</code></pre>
+<p>allocate_or_free_tid记录了最后操作的线程id；memory_tracer_tag_marker是一个magicword，可以认为在应用程序内存中标识而且仅标识一个memory_tracer_tag结构。tcmalloc_class_id记录了tcmalloc的class类型，可以通过tcmalloc::Static::sizemap_.class_to_size_[tcmalloc_class_id]获取内存块的大小信息。allocate_or_free_marker是一个magicword，标识此内存块的状态是否为使用中；allocate_or_free_backtrace_id记录了当前内存分配调用栈的id，通过这个id可以获得内存块最后操作的函数地址栈信息；allocate_or_free_timestamp记录内存分配、释放的最后时间戳。基于以上的TAG信息，在应用程序运行的任何时刻，都可以通过gcore或者让应用程序主动core的方法获取内存使用的具体信息，帮助调查各种非预期的内存使用方式。</p>
+<p>**修改版的tcmalloc做了如下的额外工作：<strong><br>
+1）    在调用malloc、calloc、realloc、valloc、memalign、posix_memalign、free等内存管理函数前，内存分配函数会多申请16个字节保存memory_tracer_tag信息。<br>
+2）    当内存分配函数分配成功时，在分配内存的memory_tracer_tag区记录本次分配的信息<br>
+3）    在内存释放函数释放前，在待释放内存的memory_tracer_tag区记录本次释放的信息</strong></p>
+<p>因为backtrace操作性能较低，导致大型的应用程序不能正常运行。为了解决backtrace性能问题，本实现中利用编译器的-finstrument-functions编译开关通过函数注入的方式直接记录函数调用栈，将性能影响控制在有限范围内，具体流程如下：<br>
+1）添加-finstrument-functions编译器参数重新编译待调查的应用程序或部分模块，编译器会在每个函数调用的开头插入对__cyg_profile_func_enter的调用，在退出函数的时候插入对__cyg_profile_func_exit的调用。<br>
+2）在内存跟踪函数库中定义thread local的变量用来保存每个thread的调用栈信息，并在库中实现__cyg_profile_func_enter和__cyg_profile_func_exit函数，从而通过这两个函数实时更新调用栈。<br>
+不同于其他只记录统计信息的分析方式，本链接库在内存中记录了各种详细信息，所以优于只输出统计信息的工作方式，分析内存镜像能够加快定位问题的速度。但直接gcore或者gdb attach的方式可能导致应用程序异常，为了解决这个问题，本链接库通过创建子进程并在子进程中abort的方式拿到应用程序的完整内存镜像，期间应用程序所在的父进程可以正常工作。</p>
+<p>内存泄漏及瞬间暴增的检测：<strong><br>
+1） 内存泄露是C/C++等不支持GC操作语言的常见问题，其会导致应用程序内存使用量持续增加，最终进程因为OOM被系统杀掉；另外在某些情况下，虽然程序本身没有内存泄露，但因为程序设计的不够合理，造成内存使用量暴增，而内存没有及时释放，也会造成进程因为OOM被系统杀掉。<br>
+2） 通过在编译期静态/动态链接或者运行期动态链接的方式，把修改版的tcmalloc链接进应用程序，当发现内存使用不符合预期的时候，通过gdb连接到应用程序或者通过gdb分析应用程序gcore的方式，都可以清楚获得当前进程的哪些内存是在使用中，以及其何时何处被分配等信息。因为有完整的内存信息、分配信息，从而可以直接解析泄露内存的数据内容，结合日志等其他辅助信息可以轻松查清内存泄露及瞬间暴增的原因，显著优于其余基于统计的内存泄漏调查方式。</strong></p>
+<p>完整使用方法：<strong><br>
+1）    通过在编译期静态/动态链接或者运行期动态链接的方式，把修改版的tcmalloc链接进应用程序<br>
+2）    通过环境变量ABORT_THRESHOLD控制运行时tcmalloc的行为，当内存使用量超过阈值会创建子进程abort，从而在保证主进程正常执行的情况下获得内存镜像，默认6G<br>
+3）    通过gcore或者程序主动core获取内存镜像，或者gdb attach连接到应用程序<br>
+4）    因为本内存跟踪库调查内存泄露问题可以查询具体泄露地址来辅助泄露原因调查，常规扫描core内存数据的方法效率低下，所以扩展了gdb7.10的部分功能,用这个定制版的gdb可以较快的调查内存泄漏问题。下载地址：<a href="http://10.101.194.223/tcmalloc/gdb710.tgz">http://10.101.194.223/tcmalloc/gdb710.tgz</a>，直接下载gdb并解压缩后正常运行，其中memleak命令用来分析core文件的内存泄露问题，直接运行memleak显示具体用法。</strong></p>
+<p>一个内存泄露的调查实例**<br>
+一个有很多内存泄露点的C++程序：</p>
+<pre><code data-language="" class="hljs cpp"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;stdio.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;string&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;stdlib.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;unistd.h&gt;</span></span>
+
+<span class="hljs-function"><span class="hljs-keyword">void</span>* <span class="hljs-title">demo_x</span><span class="hljs-params">(<span class="hljs-keyword">void</span>*)</span>
+</span>{
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>* a = <span class="hljs-keyword">new</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>;
+    <span class="hljs-keyword">char</span>* x = <span class="hljs-keyword">new</span> <span class="hljs-keyword">char</span>[<span class="hljs-number">1024</span>];
+    <span class="hljs-keyword">delete</span> a;
+    <span class="hljs-keyword">delete</span>[] x;
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">demo_y</span><span class="hljs-params">(<span class="hljs-keyword">int</span> idx)</span>
+</span>{
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>* a = <span class="hljs-keyword">new</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>;
+    <span class="hljs-keyword">char</span>* x = <span class="hljs-keyword">new</span> <span class="hljs-keyword">char</span>[<span class="hljs-number">1024</span>];
+    <span class="hljs-built_in">memset</span>(x, idx, <span class="hljs-number">1024</span>);
+    <span class="hljs-keyword">if</span> (idx % <span class="hljs-number">3</span> == <span class="hljs-number">0</span>) <span class="hljs-keyword">delete</span>[] x;
+    <span class="hljs-keyword">return</span> a-&gt;size() + idx;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> *argv[])</span>
+</span>{
+    <span class="hljs-keyword">int</span> ar[<span class="hljs-number">1000000</span>];
+    <span class="hljs-keyword">int</span> rt = <span class="hljs-number">0</span>;
+    demo_x(<span class="hljs-literal">NULL</span>);
+    <span class="hljs-keyword">pthread_t</span>  th1;
+    (<span class="hljs-keyword">void</span>) pthread_create(&amp;th1, <span class="hljs-literal">NULL</span>, demo_x, <span class="hljs-literal">NULL</span>);
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">size_t</span> idx = <span class="hljs-number">0</span>; idx &lt; <span class="hljs-number">1</span> * <span class="hljs-number">1024</span> * <span class="hljs-number">1024</span>; ++idx)
+        rt += demo_y(idx);
+    (<span class="hljs-keyword">void</span>) pthread_join(th1, <span class="hljs-literal">NULL</span>);
+    <span class="hljs-built_in">abort</span>(); <span class="hljs-comment">// just use for obtain memory layout</span>
+    <span class="hljs-keyword">return</span> rt;
+}
+</code></pre>
+<p>使用g++编译，然后运行：</p>
+<pre><code data-language="" class="hljs stylus"><span class="hljs-variable">$g</span>++ memleak_demo<span class="hljs-selector-class">.cpp</span> -o memleak_demo -lpthread -g
+<span class="hljs-variable">$LD_PRELOAD</span>=/path/to/libtcmalloc<span class="hljs-selector-class">.so</span> ./memleak_demo
+Aborted (core dumped)
+</code></pre>
+<p>下载分析工具并进行简单分析：</p>
+<pre><code data-language="" class="hljs dts">$wget http:<span class="hljs-comment">//10.101.194.223/tcmalloc/gdb710.tgz #下载分析工具</span>
+$tar xzf gdb710.tgz <span class="hljs-meta">#解压缩</span>
+$.<span class="hljs-meta-keyword">/gdb/</span>gdb memleak_demo <span class="hljs-meta-keyword">/apsara/</span>tubo<span class="hljs-comment">//corefile/core-memleak_demo-26637-1456807272-rs3a01031.et2sqa --data-directory=share/gdb/</span>
+(gdb) memleak alloc <span class="hljs-number">100</span> <span class="hljs-meta">#显示所有内存使用量超过100字节的调用栈</span>
+<span class="hljs-symbol">StackId:</span> <span class="hljs-number">7</span>, Leak size: <span class="hljs-number">144</span>
+    <span class="hljs-number">00</span>  <span class="hljs-number">0x0000003282a9b861</span> <span class="hljs-params">&lt;_ZNSs4_Rep9_S_createEmmRKSaIcE+<span class="hljs-number">33</span>&gt;</span>
+<span class="hljs-symbol">StackId:</span> <span class="hljs-number">11</span>, Leak size: <span class="hljs-number">320</span>
+    <span class="hljs-number">00</span>  <span class="hljs-number">0x00000035e5c32e41</span> <span class="hljs-params">&lt;__add_to_environ+<span class="hljs-number">225</span>&gt;</span>
+<span class="hljs-symbol">StackId:</span> <span class="hljs-number">20</span>, Leak size: <span class="hljs-number">320</span>
+    <span class="hljs-number">00</span>  <span class="hljs-number">0x00000035e5810113</span> <span class="hljs-params">&lt;_dl_allocate_tls+<span class="hljs-number">51</span>&gt;</span>
+<span class="hljs-symbol">StackId:</span> <span class="hljs-number">21</span>, Leak size: <span class="hljs-number">33554432</span>
+    <span class="hljs-number">00</span>  <span class="hljs-number">0x00000000004008fe</span> <span class="hljs-params">&lt;demo_y(int)+<span class="hljs-number">22</span>&gt;</span> at memleak_demo.cpp:<span class="hljs-number">17</span>
+<span class="hljs-symbol">StackId:</span> <span class="hljs-number">22</span>, Leak size: <span class="hljs-number">805305600</span>
+    <span class="hljs-number">00</span>  <span class="hljs-number">0x000000000040091d</span> <span class="hljs-params">&lt;demo_y(int)+<span class="hljs-number">53</span>&gt;</span> at memleak_demo.cpp:<span class="hljs-number">18</span>
+</code></pre>
+<p>如上列出了所有的内存泄露调用栈，想看看805305600内存的泄露地址是哪些？看下面的命令：</p>
+<pre><code data-language="" class="hljs dns">(gdb) memleak detail <span class="hljs-number">22</span>
+===========================================
+<span class="hljs-number">0</span>x000<span class="hljs-number">00071a000</span>,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x000<span class="hljs-number">00071a480</span>,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x000<span class="hljs-number">00071a900</span>,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x00000071ad80,<span class="hljs-number">1456807271</span>
+<span class="hljs-number">0</span>x<span class="hljs-number">00000071b200</span>,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x000<span class="hljs-number">00071b680</span>,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x00000071bb00,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x00000071bf80,<span class="hljs-number">1456807271</span>
+<span class="hljs-number">0</span>x000<span class="hljs-number">00071c400</span>,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x000<span class="hljs-number">00071c880</span>,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x00000071cd00,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x<span class="hljs-number">00000071d180</span>,<span class="hljs-number">1456807271</span>
+<span class="hljs-number">0</span>x000<span class="hljs-number">00071d600</span>,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x00000071da80,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x000<span class="hljs-number">00071e000</span>,<span class="hljs-number">1456807271</span>       <span class="hljs-number">0</span>x000<span class="hljs-number">00071e480</span>,<span class="hljs-number">1456807271</span>
+===========================================
+<span class="hljs-number">0</span>x00003cee8000,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003cee8480,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003cee8900,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003cee8d80,<span class="hljs-number">1456807272</span>
+<span class="hljs-number">0</span>x00003cee9200,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003cee9680,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003cee9b00,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003cee9f80,<span class="hljs-number">1456807272</span>
+<span class="hljs-number">0</span>x00003ceea400,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003ceea880,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003ceead00,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003ceeb180,<span class="hljs-number">1456807272</span>
+<span class="hljs-number">0</span>x00003ceeb600,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003ceeba80,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003ceef600,<span class="hljs-number">1456807272</span>       <span class="hljs-number">0</span>x00003ceefa80,<span class="hljs-number">1456807272</span>
+===========================================
+</code></pre>
+<p>该调用栈最早申请内存时间是1456807271，返回地址0x00000071a000，最后一次申请时间是1456807272，返回地址是0x00003ceefa80，知道地址和调用栈能干什么呢？有调用栈就知道地址对应的数据类型了，在gdb中就可以把地址强转成对应的类型看看这个内存存的是什么数据了，再接合代码和日志看一下，时间1456807271之后发生什么异常造成内存没有正常释放呢？比如我们从代码知道18行是一个char数组，直接查看内存是什么吧：</p>
+<pre><code data-language="" class="hljs dns">(gdb) x/<span class="hljs-number">4</span>xg <span class="hljs-number">0</span>x000<span class="hljs-number">00071a000</span>
+<span class="hljs-number">0x71a000</span>:       <span class="hljs-number">0</span>x0<span class="hljs-number">101010101010101</span>      <span class="hljs-number">0</span>x0<span class="hljs-number">101010101010101</span>
+<span class="hljs-number">0x71a010</span>:       <span class="hljs-number">0</span>x0<span class="hljs-number">101010101010101</span>      <span class="hljs-number">0</span>x0<span class="hljs-number">101010101010101</span>
+(gdb) x/<span class="hljs-number">4</span>xg <span class="hljs-number">0</span>x000<span class="hljs-number">00071a480</span>
+<span class="hljs-number">0x71a480</span>:       <span class="hljs-number">0</span>x04040<span class="hljs-number">40404040404</span>      <span class="hljs-number">0</span>x04040<span class="hljs-number">40404040404</span>
+<span class="hljs-number">0x71a490</span>:       <span class="hljs-number">0</span>x04040<span class="hljs-number">40404040404</span>      <span class="hljs-number">0</span>x04040<span class="hljs-number">40404040404</span>
+(gdb) x/<span class="hljs-number">4</span>xg <span class="hljs-number">0</span>x000<span class="hljs-number">00071a900</span>
+<span class="hljs-number">0x71a900</span>:       <span class="hljs-number">0</span>x0<span class="hljs-number">202020202020202</span>      <span class="hljs-number">0</span>x0<span class="hljs-number">202020202020202</span>
+<span class="hljs-number">0x71a910</span>:       <span class="hljs-number">0</span>x0<span class="hljs-number">202020202020202</span>      <span class="hljs-number">0</span>x0<span class="hljs-number">202020202020202</span>
+(gdb) x/<span class="hljs-number">4</span>xg <span class="hljs-number">0</span>x00000071ad80
+<span class="hljs-number">0</span>x71ad80:       <span class="hljs-number">0</span>x08080<span class="hljs-number">80808080808</span>      <span class="hljs-number">0</span>x08080<span class="hljs-number">80808080808</span>
+<span class="hljs-number">0</span>x71ad90:       <span class="hljs-number">0</span>x08080<span class="hljs-number">80808080808</span>      <span class="hljs-number">0</span>x08080<span class="hljs-number">80808080808</span>
+</code></pre>
+<p>再看看代码，发现idx不能被3整除的时候忘记析构了，调查内存泄露是不是容易了很多？<br>
+另外，如果添加-finstrument-functions编译参数的话，就能知道完整栈信息了：</p>
+<pre><code data-language="" class="hljs x86asm">$g++ memleak_demo.cpp -o memleak_demo -lpthread -g
+$./gdb/gdb memleak_demo /apsara/tubo//corefile/core-memleak_demo-<span class="hljs-number">16321</span>-<span class="hljs-number">1456813600</span>-rs3a01031.et2sqa
+(gdb) memleak alloc
+<span class="hljs-symbol">StackId:</span> <span class="hljs-number">21</span>, Leak size: <span class="hljs-number">33554432</span>
+    <span class="hljs-number">00</span>  <span class="hljs-number">0x0000004009bc</span> &lt;demo_y(<span class="hljs-keyword">int</span>)+<span class="hljs-number">36</span>&gt; <span class="hljs-meta">at</span> memleak_demo.cpp:<span class="hljs-number">17</span>
+    <span class="hljs-number">01</span>  <span class="hljs-number">0x000000400be3</span> &lt;main(<span class="hljs-keyword">int</span>, char&lt;strong&gt;)+<span class="hljs-number">101</span>&gt; <span class="hljs-meta">at</span> memleak_demo.cpp:<span class="hljs-number">31</span>
+    <span class="hljs-number">02</span>  <span class="hljs-number">0x0035e5c1d994</span> &lt;__libc_start_main+<span class="hljs-number">244</span>&gt;
+<span class="hljs-symbol">StackId:</span> <span class="hljs-number">22</span>, Leak size: <span class="hljs-number">805305600</span>
+    <span class="hljs-number">00</span>  <span class="hljs-number">0x0000004009db</span> &lt;demo_y(<span class="hljs-keyword">int</span>)+<span class="hljs-number">67</span>&gt; <span class="hljs-meta">at</span> memleak_demo.cpp:<span class="hljs-number">18</span>
+    <span class="hljs-number">01</span>  <span class="hljs-number">0x000000400be3</span> &lt;main(<span class="hljs-keyword">int</span>, char&lt;/strong&gt;)+<span class="hljs-number">101</span>&gt; <span class="hljs-meta">at</span> memleak_demo.cpp:<span class="hljs-number">31</span>
+    <span class="hljs-number">02</span>  <span class="hljs-number">0x0035e5c1d994</span> &lt;__libc_start_main+<span class="hljs-number">244</span>&gt;
+</code></pre>
+<p><strong>最后附使用飞天build系统统一替换方法：</strong><br>
+1）    使用<a href="http://10.101.194.223/tcmalloc/cc_wrapper">http://10.101.194.223/tcmalloc/cc_wrapper</a>的cc_wrapper替换bin/cc_wrapper<br>
+2）    使用<a href="http://10.101.194.223/tcmalloc/libtcmalloc_static.a">http://10.101.194.223/tcmalloc/libtcmalloc_static.a</a>替换同名文件<br>
+3）    使用<a href="http://10.101.194.223/tcmalloc/libtcmalloc.so">http://10.101.194.223/tcmalloc/libtcmalloc.so</a>替换同名文件<br>
+4）    编译、部署飞天<br>
+5）    重现内存泄露问题吧，只要重现了就等于问题解决了</p>
+
+      </div>
+            
+      
+      <div class="_article-float hidden-xs" data-fixed="false">
+        <div class="container">
+          <div class="_article-float-inner">
+          <aside class="_article-side">
+    <a href="http://www.atatech.org/articles/50146/follow" class="btn btn-primary btn-block" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).parent().replaceWith(r)">关注</a>
+    <section class="_article-followers">
+    <h6 class="heading text-center">25人关注该文章</h6>
+    <ul class="list-inline">
+      <li><a href="http://www.atatech.org/users/107435" title="南辕"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_0acaaa71df269f9503bbdd118e88fac7.png_80x80" width="26" height="26" alt="南辕" class="img-user"></a></li><li><a href="http://www.atatech.org/users/2476" title="陈挺"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725182952_2476_60.jpeg_80x80" width="26" height="26" alt="陈挺" class="img-user"></a></li><li><a href="http://www.atatech.org/users/23668" title="徐健"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183109_23668_60.jpeg_80x80" width="26" height="26" alt="徐健" class="img-user"></a></li><li><a href="http://www.atatech.org/users/208360" title="炽宇"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/img_20160601095343_80x80" width="26" height="26" alt="炽宇" class="img-user"></a></li><li><a href="http://www.atatech.org/users/10576" title="致虚"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120719180806_10576_60.jpeg_80x80" width="26" height="26" alt="致虚" class="img-user"></a></li><li><a href="http://www.atatech.org/users/68735" title="霄天"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_d17c764a4abb08b8f6b4840edf8859d0.png_80x80" width="26" height="26" alt="霄天" class="img-user"></a></li><li><a href="http://www.atatech.org/users/79125" title="保翔"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_11ceb2caf7a29e6690078307ccd7fbf2.png_80x80" width="26" height="26" alt="保翔" class="img-user"></a></li><li><a href="http://www.atatech.org/users/67096" title="末于"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_b7bf3ead01f71df4050a8233621f53cc.png_80x80" width="26" height="26" alt="末于" class="img-user"></a></li><li><a data-toggle="modal" href="http://www.atatech.org/articles/50146/followers" data-target="#modal-followers" title="查看全部"><div class="img-user img-user-more text-center" style="width:26px;height:26px">...</div></a></li>    </ul>
+  </section>
+</aside>
+          </div>
+        </div>
+      </div>
+
+      <footer class="actions">
+        <a href="http://www.atatech.org/articles/50146#comment" class="btn btn-primary js-scroll-to">评论文章
+                      (25)
+                  </a>
+        <a href="http://www.atatech.org/articles/50146/voteup" title="赞" class="btn btn-default" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).next().addBack().toggle();$(&#39;#voters&#39;).html(r)">
+          <span class="glyphicon glyphicon-thumbs-up"></span>
+          54
+        </a>
+        <a href="http://www.atatech.org/articles/50146/unvoteup" title="取消赞" class="btn btn-primary" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).prev().addBack().toggle();$(&#39;#voters&#39;).html(r)" style="display:none">
+          <span class="glyphicon glyphicon-thumbs-up"></span>
+          55
+        </a>
+                <button class="btn btn-default" data-toggle="modal" data-target="#modal-share" data-article-id="50146" data-share-count-target="#share-count" title="分享">
+          <span class="glyphicon glyphicon-share"></span>
+          <span id="share-count">0</span>
+        </button>
+                	<!-- 收藏 -->
+        <a href="http://www.atatech.org/articles/50146/mark" title="收藏" class="btn btn-default" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).next().addBack().toggle()">
+          <span class="glyphicon glyphicon-star"></span>
+          48
+        </a>
+        <a href="http://www.atatech.org/articles/50146/unmark" title="取消收藏" class="btn btn-primary" role="button" rel="nofollow" data-remote="true" data-done="$(this).prev().addBack().toggle()" data-method="post" style="display:none">
+          <span class="glyphicon glyphicon-star"></span>
+          49
+        </a>
+      </footer>
+    </article>
+
+    <hr>
+    
+
+    <div id="voters">
+      <div id="voters" class="_article-voters">
+  <h3 class="heading">他们赞过该文章</h3>
+  <ul class="list-inline"><li><a href="http://www.atatech.org/users/23911" title="徐瑞涛"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_4a1fee2e159e5ba76e1a8b3f54634d19.png_80x80" width="28" height="28" alt="徐瑞涛" class="img-user"></a></li><li><a href="http://www.atatech.org/users/24652" title="彧卿"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_f6674d4bbdc0d0b3ae81d149d831d777.png_80x80" width="28" height="28" alt="彧卿" class="img-user"></a></li><li><a href="http://www.atatech.org/users/163963" title="墨无"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_658e069f81b2379c2e3877e6bdb6a99f.png_80x80" width="28" height="28" alt="墨无" class="img-user"></a></li><li><a href="http://www.atatech.org/users/187289" title="小阮"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/img_20160429182001_80x80" width="28" height="28" alt="小阮" class="img-user"></a></li><li><a href="http://www.atatech.org/users/208360" title="炽宇"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/img_20160601095343_80x80" width="28" height="28" alt="炽宇" class="img-user"></a></li><li><a href="http://www.atatech.org/users/10576" title="致虚"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120719180806_10576_60.jpeg_80x80" width="28" height="28" alt="致虚" class="img-user"></a></li><li><a href="http://www.atatech.org/users/123031" title="至言"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_211f06e2184382d252021a5c108af7c3.png_80x80" width="28" height="28" alt="至言" class="img-user"></a></li><li><a href="http://www.atatech.org/users/66431" title="白驼"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_45d03ffd5d09e1890853fdb75c6c2dcc.png_80x80" width="28" height="28" alt="白驼" class="img-user"></a></li><li><a href="http://www.atatech.org/users/9295" title="逯斌"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_0fe9736d2d0d132d43d9fe500a0557bf.png_80x80" width="28" height="28" alt="逯斌" class="img-user"></a></li><li><a href="http://www.atatech.org/users/33001" title="成阳"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_3c2039db61fe90adf34f25f38deb893a.png_80x80" width="28" height="28" alt="成阳" class="img-user"></a></li><li><a href="http://www.atatech.org/users/125692" title="五林"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_34cd5f42946d5728bf579685680b3f3f.png_80x80" width="28" height="28" alt="五林" class="img-user"></a></li><li><a href="http://www.atatech.org/users/4934" title="五竹"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120719180721_4934_60.jpeg_80x80" width="28" height="28" alt="五竹" class="img-user"></a></li><li><a href="http://www.atatech.org/users/23867" title="刘善阳"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_c601882dfe37cf36a056d638e53ee66b.png_80x80" width="28" height="28" alt="刘善阳" class="img-user"></a></li><li><a href="http://www.atatech.org/users/6471" title="满弓"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183015_6471_60.jpeg_80x80" width="28" height="28" alt="满弓" class="img-user"></a></li><li><a href="http://www.atatech.org/users/97820" title="揽岳"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_8c64694ceb8b7694b11e8aaa082675e2.png_80x80" width="28" height="28" alt="揽岳" class="img-user"></a></li><li><a href="http://www.atatech.org/users/92044" title="朱云锋"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/img_20150814201031.jpg_80x80" width="28" height="28" alt="朱云锋" class="img-user"></a></li><li><a href="http://www.atatech.org/users/130012" title="夜煞"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_a6aaf13440a48fd37e1ee174346e0f6b.png_80x80" width="28" height="28" alt="夜煞" class="img-user"></a></li><li><a href="http://www.atatech.org/users/82191" title="灵台"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_8b23d994fb7d0ccf4410ca23ee88e4bc.png_80x80" width="28" height="28" alt="灵台" class="img-user"></a></li><li><a href="http://www.atatech.org/users/11152" title="神助"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183040_11152_60.jpeg_80x80" width="28" height="28" alt="神助" class="img-user"></a></li><li><a href="http://www.atatech.org/users/3818" title="周文翠"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183000_3818_60.jpeg_80x80" width="28" height="28" alt="周文翠" class="img-user"></a></li><li><a href="http://www.atatech.org/users/66555" title="景凡"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_209842984ab4a769e26da6d1ebbc3707.png_80x80" width="28" height="28" alt="景凡" class="img-user"></a></li><li><a href="http://www.atatech.org/users/70784" title="行简"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_d4f70439fda8ca9461a44c58e0a0943a.png_80x80" width="28" height="28" alt="行简" class="img-user"></a></li><li><a href="http://www.atatech.org/users/9285" title="十品"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/9285_20140528164052_62.jpg_80x80" width="28" height="28" alt="十品" class="img-user"></a></li><li><a href="http://www.atatech.org/users/94019" title="悬帆"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_2fba64642ffcf55176223dfe68aad866.png_80x80" width="28" height="28" alt="悬帆" class="img-user"></a></li><li><a href="http://www.atatech.org/users/101350" title="玉律"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_01bdc4359e932aa7f38aadb5a3ce00e0.png_80x80" width="28" height="28" alt="玉律" class="img-user"></a></li><li><a href="http://www.atatech.org/users/82566" title="邢勇"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_7231385396355f3a3892534c00402fe6.png_80x80" width="28" height="28" alt="邢勇" class="img-user"></a></li><li><a href="http://www.atatech.org/users/67944" title="破阵"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_5608e05fc082b3c54769d871f340d9da.png_80x80" width="28" height="28" alt="破阵" class="img-user"></a></li><li><a href="http://www.atatech.org/users/12143" title="孙伟"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_0c1e35c59823910dbfca717fc02096e7.png_80x80" width="28" height="28" alt="孙伟" class="img-user"></a></li><li><a href="http://www.atatech.org/users/20993" title="默巴"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_a3406b19ea76752fa277b70037448e0d.png_80x80" width="28" height="28" alt="默巴" class="img-user"></a></li><li><a href="http://www.atatech.org/users/75582" title="春帆"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_9352fd9dbcde3ca2dd06de340f841b99.png_80x80" width="28" height="28" alt="春帆" class="img-user"></a></li><li><a href="http://www.atatech.org/users/34296" title="元朔"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20130619105227_34296_60.jpeg_80x80" width="28" height="28" alt="元朔" class="img-user"></a></li><li><a href="http://www.atatech.org/users/14994" title="寳爷"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_11734c642f4a465cd55504afec38110d.png_80x80" width="28" height="28" alt="寳爷" class="img-user"></a></li><li><a href="http://www.atatech.org/users/10987" title="咏心"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_e63b7cf684ed4a1b83160c763176b5a6.png_80x80" width="28" height="28" alt="咏心" class="img-user"></a></li><li><a href="http://www.atatech.org/users/18078" title="郗鉴"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_1fcd3375fa870e5dd99c71f5d52b4825.png_80x80" width="28" height="28" alt="郗鉴" class="img-user"></a></li><li><a href="http://www.atatech.org/users/21046" title="裴晓辉"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_1d1e62052e90a97409270f31326f5b0e.png_80x80" width="28" height="28" alt="裴晓辉" class="img-user"></a></li><li><a href="http://www.atatech.org/users/11084" title="龙门"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183039_11084_60.jpeg_80x80" width="28" height="28" alt="龙门" class="img-user"></a></li><li><a href="http://www.atatech.org/users/10869" title="柒游"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183039_10869_60.jpeg_80x80" width="28" height="28" alt="柒游" class="img-user"></a></li><li><a href="http://www.atatech.org/users/80066" title="淼渺"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_01c81587f209ae7f7ac73ffbb5df0faa.png_80x80" width="28" height="28" alt="淼渺" class="img-user"></a></li><li><a href="http://www.atatech.org/users/173230" title="宜云"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_5bd2f74bbeefaa81c81567f50bca15cb.png_80x80" width="28" height="28" alt="宜云" class="img-user"></a></li><li><a href="http://www.atatech.org/users/5340" title="陈伟才"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_1e69276e3d5650de297e980aa4f59671.png_80x80" width="28" height="28" alt="陈伟才" class="img-user"></a></li><li><a href="http://www.atatech.org/users/68428" title="飞山"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_0f74b97c7afdd09412b1147e812aad76.png_80x80" width="28" height="28" alt="飞山" class="img-user"></a></li><li><a href="http://www.atatech.org/users/24437" title="吝倩"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_49de3763a2a8e2ce3d9ff78447e3d5a9.png_80x80" width="28" height="28" alt="吝倩" class="img-user"></a></li><li><a href="http://www.atatech.org/users/152632" title="招拒"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/img_20150825202831.jpg_80x80" width="28" height="28" alt="招拒" class="img-user"></a></li><li><a href="http://www.atatech.org/users/92848" title="练实"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_f30813c317678b294e9945e1e99009ee.png_80x80" width="28" height="28" alt="练实" class="img-user"></a></li><li><a href="http://www.atatech.org/users/68092" title="思潜"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_1448628d3de88430d703aa7e91c9f67b.png_80x80" width="28" height="28" alt="思潜" class="img-user"></a></li><li><a href="http://www.atatech.org/users/100974" title="泰岳"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/img_20140923095307.jpg_80x80" width="28" height="28" alt="泰岳" class="img-user"></a></li><li><a href="http://www.atatech.org/users/33653" title="武侠"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_cb92ee0067e7481c88954b7d8abd8f4a.png_80x80" width="28" height="28" alt="武侠" class="img-user"></a></li><li><a href="http://www.atatech.org/users/80055" title="霁瑕"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_b49524be4434f70ea27910a79ed2291e.png_80x80" width="28" height="28" alt="霁瑕" class="img-user"></a></li><li><a href="http://www.atatech.org/users/75134" title="文修"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_ea74e2d38dba7ba37e4a5a83b64019df.png_80x80" width="28" height="28" alt="文修" class="img-user"></a></li><li><a href="http://www.atatech.org/users/22659" title="尚白"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_7bda612fb0ffac6de1a3be8773e0b495.png_80x80" width="28" height="28" alt="尚白" class="img-user"></a></li><li><a href="http://www.atatech.org/users/32881" title="董乘宇"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_326a8605975106f1672c912bd16b4e7b.png_80x80" width="28" height="28" alt="董乘宇" class="img-user"></a></li><li><a href="http://www.atatech.org/users/7826" title="姚文辉"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183023_7826_60.jpeg_80x80" width="28" height="28" alt="姚文辉" class="img-user"></a></li><li><a href="http://www.atatech.org/users/33875" title="省身"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_dda7639e08ddeee089a4e3a22f77ab5a.png_80x80" width="28" height="28" alt="省身" class="img-user"></a></li><li><a href="http://www.atatech.org/users/23909" title="刘俊峰"><img src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183110_23909_60.jpeg_80x80" width="28" height="28" alt="刘俊峰" class="img-user"></a></li><!-- <li><a href="#" class="img-user _article-voters-more" style="width:28px;height:28px">...</a></li> --></ul></div>
+<hr>
+    </div>
+
+            <table width="100%" class="cnzz-event" id="article-recommend">
+            <tbody><tr>
+                <th rowspan="3" width="5%">相<br>似<br>文<br>章</th>
+                <td width="50%"><li><a href="http://www.atatech.org/articles/59357">实习笔记之垃圾回收</a></li></td>
+                <td width="45%"><li><a href="http://www.atatech.org/articles/6877">如何检测堆外内存的泄漏？</a></li></td>
+            </tr>
+                            <tr>
+                    <td><li><a href="http://www.atatech.org/articles/26345">Java学习之JVM调优</a></li></td>
+                    <td><li><a href="http://www.atatech.org/articles/39104">Android开发之内存分析</a></li></td>
+                </tr>
+                            <tr>
+                    <td><li><a href="http://www.atatech.org/articles/27728">静态与动态内存分配</a></li></td>
+                    <td><li><a href="http://www.atatech.org/articles/29770">每日晨读(2015-02-11)-【啸鹏...</a></li></td>
+                </tr>
+                    </tbody></table>
+    
+        <ul class="pager _article-pager">
+            <li class="previous"><a href="http://www.atatech.org/articles/49305">上一篇：盘古master/chunkserver的checkpoint子进程随机core原因调查</a></li>
+                  <li class="next"><a href="http://www.atatech.org/articles/60154">下一篇：C++应用程序内存泄露调查篇II</a></li>
+          </ul>
+    <hr>
+    
+    <section class="comments-box clearfix">
+      <div class="media-list comments" id="comments">
+        
+<div class="comment media gaze in" id="comment-83495">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/33875" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_dda7639e08ddeee089a4e3a22f77ab5a.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        1F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/33875" class="author">省身</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83495" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T10:24:05+08:00">2016-03-02 10:24:05</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>这个工具很赞，帮我们调查解决了不少问题。</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83495/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83495/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83495&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83495">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83495" style="display:none">
+      <div class="sub-comments media-list" id="comment-83495-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83495/subcomments/" method="POST" data-remote="true" data-target="#comment-83495-sub" data-done="$(&#39;#sub-comments-count-83495&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83496">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/7826" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183023_7826_60.jpeg_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        2F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/7826" class="author">姚文辉</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83496" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T10:24:25+08:00">2016-03-02 10:24:25</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>debug 的好经验总结！</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83496/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83496/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83496&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83496">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83496" style="display:none">
+      <div class="sub-comments media-list" id="comment-83496-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83496/subcomments/" method="POST" data-remote="true" data-target="#comment-83496-sub" data-done="$(&#39;#sub-comments-count-83496&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83499">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/97418" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_7e2e131c77a5c9c8c4d6fd769e9a619b.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        3F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/97418" class="author">苍石</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83499" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T10:37:16+08:00">2016-03-02 10:37:16</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>这个很管用</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83499/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83499/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83499&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83499">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83499" style="display:none">
+      <div class="sub-comments media-list" id="comment-83499-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83499/subcomments/" method="POST" data-remote="true" data-target="#comment-83499-sub" data-done="$(&#39;#sub-comments-count-83499&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83501">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/68092" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_1448628d3de88430d703aa7e91c9f67b.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        4F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/68092" class="author">思潜</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83501" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T10:43:32+08:00">2016-03-02 10:43:32</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>赞，实际解决了很多问题！</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83501/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83501/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83501&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83501">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83501" style="display:none">
+      <div class="sub-comments media-list" id="comment-83501-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83501/subcomments/" method="POST" data-remote="true" data-target="#comment-83501-sub" data-done="$(&#39;#sub-comments-count-83501&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83502">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/92848" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_f30813c317678b294e9945e1e99009ee.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        5F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/92848" class="author">练实</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83502" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T10:44:16+08:00">2016-03-02 10:44:16</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83502/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83502/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83502&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83502">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83502" style="display:none">
+      <div class="sub-comments media-list" id="comment-83502-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83502/subcomments/" method="POST" data-remote="true" data-target="#comment-83502-sub" data-done="$(&#39;#sub-comments-count-83502&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83506">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/34572" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_3be978eba105b45ed96528c8dd8c9179.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        6F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/34572" class="author">王勇</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83506" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T10:59:51+08:00">2016-03-02 10:59:51</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>赞，方法很有通用性。很多内存泄漏调查的终极武器。</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83506/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83506/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83506&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83506">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83506" style="display:none">
+      <div class="sub-comments media-list" id="comment-83506-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83506/subcomments/" method="POST" data-remote="true" data-target="#comment-83506-sub" data-done="$(&#39;#sub-comments-count-83506&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83508">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/24437" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_49de3763a2a8e2ce3d9ff78447e3d5a9.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        7F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/24437" class="author">吝倩</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83508" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T11:02:51+08:00">2016-03-02 11:02:51</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>赞，这个工具帮我大忙了，真的很好用</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83508/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83508/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83508&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83508">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83508" style="display:none">
+      <div class="sub-comments media-list" id="comment-83508-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83508/subcomments/" method="POST" data-remote="true" data-target="#comment-83508-sub" data-done="$(&#39;#sub-comments-count-83508&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83509">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/68428" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_0f74b97c7afdd09412b1147e812aad76.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        8F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/68428" class="author">飞山</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83509" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T11:03:06+08:00">2016-03-02 11:03:06</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>大牛又出手了。</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83509/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83509/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83509&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83509">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83509" style="display:none">
+      <div class="sub-comments media-list" id="comment-83509-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83509/subcomments/" method="POST" data-remote="true" data-target="#comment-83509-sub" data-done="$(&#39;#sub-comments-count-83509&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83511">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/5340" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_1e69276e3d5650de297e980aa4f59671.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        9F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/5340" class="author">陈伟才</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83511" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T11:06:24+08:00">2016-03-02 11:06:24</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>赞，超大磁盘项目内存泄露靠的就是这个利器！</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83511/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83511/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83511&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83511">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83511" style="display:none">
+      <div class="sub-comments media-list" id="comment-83511-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83511/subcomments/" method="POST" data-remote="true" data-target="#comment-83511-sub" data-done="$(&#39;#sub-comments-count-83511&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83512">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/173230" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_5bd2f74bbeefaa81c81567f50bca15cb.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        10F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/173230" class="author">宜云</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83512" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T11:09:17+08:00">2016-03-02 11:09:17</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>顶一个~~</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83512/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83512/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83512&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83512">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83512" style="display:none">
+      <div class="sub-comments media-list" id="comment-83512-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83512/subcomments/" method="POST" data-remote="true" data-target="#comment-83512-sub" data-done="$(&#39;#sub-comments-count-83512&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83516">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/21046" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_1d1e62052e90a97409270f31326f5b0e.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        11F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/21046" class="author">裴晓辉</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83516" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T11:19:22+08:00">2016-03-02 11:19:22</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>NB</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83516/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83516/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83516&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83516">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83516" style="display:none">
+      <div class="sub-comments media-list" id="comment-83516-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83516/subcomments/" method="POST" data-remote="true" data-target="#comment-83516-sub" data-done="$(&#39;#sub-comments-count-83516&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83517">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/11085" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183039_11085_60.jpeg_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        12F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/11085" class="author">博优</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83517" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T11:19:50+08:00">2016-03-02 11:19:50</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>好，不错。</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83517/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83517/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83517&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83517">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83517" style="display:none">
+      <div class="sub-comments media-list" id="comment-83517-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83517/subcomments/" method="POST" data-remote="true" data-target="#comment-83517-sub" data-done="$(&#39;#sub-comments-count-83517&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83518">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/176879" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_ce72141ff791afa00c3c041762842fc8.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        13F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/176879" class="author">云徒</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83518" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T11:22:53+08:00">2016-03-02 11:22:53</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>好文</p>
+
+    </div>
+    
+        <div class="voters voters-p">
+  <span>宜云</span>    <span>赞同</span>
+  </div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83518/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <a href="http://www.atatech.org/comments/83518/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        2
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83518&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83518">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83518" style="display:none">
+      <div class="sub-comments media-list" id="comment-83518-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83518/subcomments/" method="POST" data-remote="true" data-target="#comment-83518-sub" data-done="$(&#39;#sub-comments-count-83518&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83528">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/82566" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_7231385396355f3a3892534c00402fe6.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        14F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/82566" class="author">邢勇</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83528" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T12:34:53+08:00">2016-03-02 12:34:53</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>赞赞赞赞！</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83528/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83528/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83528&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83528">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83528" style="display:none">
+      <div class="sub-comments media-list" id="comment-83528-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83528/subcomments/" method="POST" data-remote="true" data-target="#comment-83528-sub" data-done="$(&#39;#sub-comments-count-83528&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83529">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/97820" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_8c64694ceb8b7694b11e8aaa082675e2.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        15F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/97820" class="author">揽岳</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83529" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T12:35:20+08:00">2016-03-02 12:35:20</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>这个工具帮我们搞定了不少内存问题，强烈推荐</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83529/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83529/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83529&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83529">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83529" style="display:none">
+      <div class="sub-comments media-list" id="comment-83529-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83529/subcomments/" method="POST" data-remote="true" data-target="#comment-83529-sub" data-done="$(&#39;#sub-comments-count-83529&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83535">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/64582" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_5385bd4228a99b3647537793bf5f584b.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        16F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/64582" class="author">霍桑</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83535" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T13:47:36+08:00">2016-03-02 13:47:36</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>内存问题调查的瑞士军刀.</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83535/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83535/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83535&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83535">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83535" style="display:none">
+      <div class="sub-comments media-list" id="comment-83535-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83535/subcomments/" method="POST" data-remote="true" data-target="#comment-83535-sub" data-done="$(&#39;#sub-comments-count-83535&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83555">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/6184" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_avatar_20120725183013_6184_60.jpeg_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        17F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/6184" class="author">简志</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83555" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T14:12:19+08:00">2016-03-02 14:12:19</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>赞，很好的尝试</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83555/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83555/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83555&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83555">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83555" style="display:none">
+      <div class="sub-comments media-list" id="comment-83555-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83555/subcomments/" method="POST" data-remote="true" data-target="#comment-83555-sub" data-done="$(&#39;#sub-comments-count-83555&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83562">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/11743" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/img_20160427171455_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        18F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/11743" class="author">不瞋</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83562" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T14:20:33+08:00">2016-03-02 14:20:33</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>牛B，内存调查利器。</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83562/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83562/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83562&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83562">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83562" style="display:none">
+      <div class="sub-comments media-list" id="comment-83562-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83562/subcomments/" method="POST" data-remote="true" data-target="#comment-83562-sub" data-done="$(&#39;#sub-comments-count-83562&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-83659">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/9285" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/9285_20140528164052_62.jpg_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        19F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/9285" class="author">十品</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-83659" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-02T17:28:26+08:00">2016-03-02 17:28:26</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>厉害！</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/83659/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/83659/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-83659&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-83659">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-83659" style="display:none">
+      <div class="sub-comments media-list" id="comment-83659-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/83659/subcomments/" method="POST" data-remote="true" data-target="#comment-83659-sub" data-done="$(&#39;#sub-comments-count-83659&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+<div class="comment media gaze in" id="comment-84747">
+  <div class="pull-left">
+    <a href="http://www.atatech.org/users/93198" class="avatar">
+      <img class="media-object img-circle" src="./应用程序内存使用跟踪之内存泄露调查篇_files/u_identicon_82189c353778321778c289486ec3c9cc.png_120x120" width="42" height="42" alt="">
+    </a>
+        <span style="margin-left: 10px">
+        20F
+    </span>
+      </div>
+  <div class="media-body">
+    <div class="source clearfix">
+      <a href="http://www.atatech.org/users/93198" class="author">无疾</a>
+                  <span class="pull-right small">
+        <a href="http://www.atatech.org/articles/50146#comment-84747" class="link"><span class="glyphicon glyphicon-link"></span></a>
+        <time class="js-relative-time" datetime="2016-03-09T10:56:15+08:00">2016-03-09 10:56:15</time>
+      </span>
+    </div>
+
+    <div class="content unsafe">
+      
+<p>顶！d=====(￣▽￣*)b</p>
+
+    </div>
+    
+        <div class="voters-p"></div>
+    
+    
+    <div class="actions clearfix">
+            <a href="http://www.atatech.org/comments/84747/voteup" title="赞" class="btn btn-link btn-sm action" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        0
+      </a>
+      <a href="http://www.atatech.org/comments/84747/unvoteup" title="取消赞" class="btn btn-link btn-sm action active" role="button" rel="nofollow" data-remote="true" data-method="post" data-done="$(this).closest(&#39;.comment&#39;).find(&#39;.voters-p:first&#39;).replaceWith(r);$(this).hide().siblings(&#39;:hidden&#39;).show()" style="display:none">
+        <span class="glyphicon glyphicon-thumbs-up"></span>
+        1
+      </a>
+      <span class="sep"></span>
+      <button class="btn btn-link btn-sm action" onclick="$(&#39;#sub-comments-box-84747&#39;).toggle()">
+        <span class="glyphicon glyphicon-comment"></span> 
+        <span id="sub-comments-count-84747">0</span>
+      </button>
+            
+          </div><!-- /.media-body -->
+    
+    <div class="sub-comments-box" id="sub-comments-box-84747" style="display:none">
+      <div class="sub-comments media-list" id="comment-84747-sub">
+
+
+  
+
+</div>
+
+
+<form action="http://www.atatech.org/comments/84747/subcomments/" method="POST" data-remote="true" data-target="#comment-84747-sub" data-done="$(&#39;#sub-comments-count-84747&#39;).inc()" class="sub-comment-form js-comment-create js-active-on-valid">
+  <input type="hidden" name="isCheck" value="1">
+    <div class="form-group">
+    <textarea name="content" rows="1" class="form-control js-mention js-auto-expand" placeholder="写下你的评论…" onfocus="$(this).closest(&#39;form&#39;).addClass(&#39;active&#39;)" required=""></textarea>
+  </div>
+  <div class="form-group text-right actions">
+    <button type="reset" class="btn btn-default btn-sm" onclick="$(this).closest(&#39;form&#39;).removeClass(&#39;active&#39;)">取消</button>
+    <button type="submit" class="btn btn-primary btn-sm" disabled="">评论</button>
+  </div>
+</form>
+    </div><!-- /.sub-comments-box -->
+  </div>
+  
+  </div>
+
+<div class="pages comment-tip">
+      <ul class="pagination ">
+    <li class="disabled"><span>◀</span></li>
+    
+  
+  <li class="active"><span>1</span></li>
+  
+          <li><a href="http://www.atatech.org/articles/50146?p=2#comments">2</a></li>
+          
+  
+   
+  <li><a href="http://www.atatech.org/articles/50146?p=2#comments" rel="next">▶</a></li>
+  </ul>
+
+    
+</div>
+      </div>
+      <script>require('comments')</script>
+
+      <form accept-charset="UTF-8" action="http://www.atatech.org/comments" method="POST" data-remote="true" data-target="#comments" class="js-comment-create js-active-on-valid">
+        <input type="hidden" name="type" value="article">
+        <input type="hidden" name="isCheck" value="1">
+        <input type="hidden" name="pid" value="50146">
+        <div class="form-group">
+          <div class="editor">
+            <div class="editor-container">
+              <div class="editor-actions">
+                <button type="button" class="btn btn-xs editor-action js-editor-fullscreen" data-original-title="全屏">
+                  <span class="glyphicon glyphicon-fullscreen"></span>
+                </button>
+                <button type="button" class="btn btn-xs editor-action js-editor-preview" data-original-title="预览">
+                  <span class="glyphicon glyphicon-eye-open"></span>
+                </button>
+                <button type="button" class="btn btn-xs editor-action js-editor-upload" data-original-title="插入图片">
+                  <span class="glyphicon glyphicon-picture"></span>
+                </button>
+              </div><!-- /.editor-actions -->
+              <textarea name="content" rows="4" class="form-control js-mention js-auto-expand editor-content" id="comment" placeholder="写下你的评论…" required=""></textarea>
+            </div><!-- /.editor-container -->
+
+            <div class="editor-preview-container">
+              <div class="editor-actions">
+                <button type="button" class="btn btn-xs editor-action js-editor-preview-off" data-original-title="取消预览">
+                  <span class="glyphicon glyphicon-eye-close"></span>
+                </button>
+              </div><!-- /.editor-actions -->
+              <div class="editor-preview content unsafe" data-disable-with="&lt;span class=&quot;text-muted&quot;&gt;loading...&lt;/span&gt;"></div>
+            </div><!-- /.editor-preview-container -->
+          </div><!-- /.editor  -->
+        </div>
+        <div class="form-group text-right">
+          <button type="submit" class="btn btn-primary" disabled="">评论</button>          
+        </div>
+      </form>
+    </section><!-- /.comments -->
+
+  </div><!-- /._article-box -->
+</div></div><!-- /.container -->
+        <footer class="footer" role="contentinfo">
+  <div class="container">
+	  <p class="copyright pull-left">
+	  	© 2016 阿里巴巴集团 版权所有 Copyright© 16 ATA. All rights reserved.
+	    <!-- cnzz 整站-->
+	    <script type="text/javascript">var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1254194462'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s11.cnzz.com/stat.php%3Fid%3D1254194462%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));</script><span id="cnzz_stat_icon_1254194462"><a href="http://www.cnzz.com/stat/website.php?web_id=1254194462" target="_blank" title="站长统计"><img border="0" hspace="0" vspace="0" src="./应用程序内存使用跟踪之内存泄露调查篇_files/pic.gif"></a></span><script src="./应用程序内存使用跟踪之内存泄露调查篇_files/stat.php" type="text/javascript"></script><script src="./应用程序内存使用跟踪之内存泄露调查篇_files/core.php" charset="utf-8" type="text/javascript"></script>
+	    <!-- /cnzz -->
+	    	  </p>
+    <ul class="list-inline pull-right">
+      <li><a href="http://www.atatech.org/articles/17702/" target="_blank">技术专题</a></li>
+      <li><a href="http://www.atatech.org/articles/13783" target="_blank">如何玩转ATA2.0</a></li>
+    </ul>
+  </div>
+</footer>
+          <div id="modal-followers" class="modal fade" role="dialog" aria-labelledby="followers" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title">关注者</h4>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+        <button type="submit" class="btn btn-primary">分享</button>
+      </div>
+    </div>
+  </div>
+</div><!-- /#modal-share -->  <div id="modal-share" class="modal fade" role="dialog" aria-labelledby="share" aria-hidden="true">
+  <div class="modal-dialog">
+    <form action="http://www.atatech.org/articles/#{id}/share" method="POST" data-remote="true" data-done="$(this).closest(&#39;.modal&#39;).modal(&#39;hide&#39;);$(&#39;#share-group-or-team&#39;).selectize({plugins: [&#39;remove_button&#39;]})[0].selectize.clear();$($(this).data(&#39;shareCountTarget&#39;)).inc();$.alert(&#39;分享成功&#39;, &#39;success&#39;)" class="js-active-on-valid" novalidate="">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title">分享</h4>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+            <a href="https://work.alibaba-inc.com/home?publicAccount=%E4%B8%80%E5%91%A8%E6%96%B0%E6%B0%94%E8%B1%A1%E4%BB%8E%E5%AD%A6%E4%B9%A0%E5%BC%80%E5%A7%8B%EF%BC%8C%E5%A4%A7%E5%AE%B6%E9%83%BD%E6%9D%A5%E7%9C%8B%E7%9C%8BATA%E4%B8%8A%E7%9A%84%E8%BF%99%E7%AF%87%E5%A5%BD%E6%96%87%E7%AB%A0%E5%90%A7%EF%BC%81%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%86%85%E5%AD%98%E4%BD%BF%E7%94%A8%E8%B7%9F%E8%B8%AA%E4%B9%8B%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E8%B0%83%E6%9F%A5%E7%AF%87%28http%3A%2F%2Fwww.atatech.org%2Farticles%2F50146%29" target="_blank">分享到阿里内外</a>
+        </div>
+        <div class="form-group">
+            <label for="share-group">分享到我的团队/圈子</label>
+                            
+                        <select name="share-group-or-team[]" id="share-group-or-team" class="form-control selectized" autocomplete="off" placeholder="Groups or Teams" disabled="" tabindex="-1" style="display: none;"><option value="" selected="selected"></option></select><div class="selectize-control form-control single plugin-remove_button"><div class="selectize-input items not-full disabled locked"><input type="text" autocomplete="off" tabindex="" placeholder="没有可分享的团队或圈子" style="width: 158px;"></div><div class="selectize-dropdown form-control single plugin-remove_button" style="display: none;"><div class="selectize-dropdown-content"></div></div></div>
+        </div>
+        <div class="form-group">
+          <label for="share-users">分享给同事</label>
+          <input type="text" name="users" class="form-control js-user-complete" id="share-users" placeholder="Users" required="1">
+        </div>
+        <div class="form-group">
+          <textarea name="content" rows="3" class="form-control" placeholder="羞羞的内容"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+        <button type="submit" class="btn btn-primary" disabled="">分享</button>
+      </div>
+    </div>
+    </form>
+  </div>
+</div><!-- /#modal-share -->
+<script>require('modal-share')</script>
+<script>
+$('#share-group-or-team').selectize({
+    plugins: ['remove_button']
+})[0].selectize.clear();
+</script>
+  <div id="modal-tag-history" class="modal fade" role="dialog" aria-labelledby="tag history" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title">标签历史</h4>
+      </div>
+      <div class="modal-body">      
+        <p class="text-muted">Loading...</p>
+      </div>
+    </div>
+  </div>
+</div><!-- /#modal-share -->
+  <div id="modal-article-modify-history" class="modal fade" role="dialog" aria-labelledby="article modify history" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="modal-title">编辑历史</h4>
+      </div>
+      <div class="modal-body">      
+        <p class="text-muted">Loading...</p>
+      </div>
+    </div>
+  </div>
+</div><!-- /#modal-share -->
+        <script data-group-id="" data-user-id="68427">require('module/mention')</script>  <script data-group-id="" data-user-id="68427">require('module/user-complete')</script>  <script>require('module/tag-complete')</script>
+  <script>require('module/editor')</script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script src="./应用程序内存使用跟踪之内存泄露调查篇_files/swfobject_modified.js"></script>
+    <script>
+  var _czc = _czc || [];
+  var statistics_obj = {
+  "article-recommend": ["文章", "相似文章"]
+  };
+  $('.cnzz-event a').on('click', function(){
+    var id = $(this).parents('.cnzz-event').attr('id');
+  _czc.push(["_trackEvent", statistics_obj[id][0], statistics_obj[id][1], "", "", id]);
+  })
+  </script>
+    <script>
+  $('.js-video').on('click', function(){
+
+    if ($('#taobao-online-video').length > 0)
+    {
+      swfobject.registerObject("taobao-online-video");
+    }
+    
+          setTimeout(function(){
+        _czc.push(["_trackEvent", '文章', "应用程序内存使用跟踪之内存泄露调查篇", "", "", 'article-50146']);
+      }, 1000);
+      })
+
+  $(function(){
+
+    $('body').append('<div id="article-outline"><div style="height:15px;"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button></div></div><style>#article-outline{display:none;min-width:140p;max-width: 200px; max-height: 350px;position:absolute;top:150px;left:-999px;border:1px solid #ccc;box-shadow:5px 5px 2px #ccc;padding: 5px 10px;background-color: #fff;overflow-y: auto;scroll-x: auto;}#article-outline ul{margin:5px 0 5px 0;padding-left:30px;font-size:12px;border-left:1px dotted #ccc;}#article-outline ul:first-child{padding-left:15px;border:none;}#article-outline li{list-style-type:decimal;margin:3px 0;}</style>')
+    var jOutline = $('#article-outline');
+
+    var jContent = $('article .content');
+    var jContentHeight = jContent.height();
+    jOutline.find('.close').on('click', function(){
+      jOutline.hide();
+    })
+
+    updateOutline();
+
+    var top = jOutline.offset().top;
+    scrollOutline();
+    $(window).on('scroll', scrollOutline);
+    function scrollOutline() {
+      var scrollTop = $(document).scrollTop();
+      var maxTop = jContent.offset().top + jContent.height() - jOutline.height();
+      if (scrollTop >= top && scrollTop <= maxTop)
+      {
+        jOutline.css({'position': 'fixed', 'top': 0});
+      }
+      else if(scrollTop < top)
+      {
+        jOutline.css({'position': 'absolute', 'top': '150px'});
+      }
+      else
+      {
+        jOutline.css({'position': 'absolute', 'top': maxTop+'px'});
+      }
+
+    }
+
+    function updateOutline() {
+        var arrAllHeader = jContent.find("h1,h2,h3,h4,h5,h6");
+        var arrOutline = ['<ul>'];
+        var header, headerText;
+        var id = 0;
+        var level = 0,
+            lastLevel = 1;
+        var levelCount = 0;
+        for (var i = 0, c = arrAllHeader.length; i < c; i++) {
+            header = arrAllHeader[i];
+            headerText = $(header).text();
+
+            header.setAttribute('id', id);
+
+            level = header.tagName.match(/^h(\d)$/i)[1];
+            levelCount = level - lastLevel;
+
+            if (levelCount > 0) {
+                for (var j = 0; j < levelCount; j++) {
+                    arrOutline.push('<ul>');
+                }
+            } else if (levelCount < 0) {
+                levelCount *= -1;
+                for (var j = 0; j < levelCount; j++) {
+                    arrOutline.push('</ul>');
+                }
+            };
+            arrOutline.push('<li>');
+            arrOutline.push('<a href="#' + id + '">' + headerText + '</a>');
+            arrOutline.push('</li>');
+            lastLevel = level;
+            id++;
+        }
+        arrOutline.push('</ul>')
+        if(arrOutline.length > 2){
+            jOutline.append(arrOutline.join(''));
+            jOutline.find('ul').each(function(i,n){
+                var jThis = $(this);
+                if(jThis.children('li').length === 0){
+                    jThis.replaceWith(jThis.children());
+                }
+            });
+            showOutline();
+        }
+        else {
+            hideOutline();
+        }
+    }
+
+    function showOutline() {
+        var offset = jContent.offset();
+
+        jOutline.css({
+            left: offset.left + jContent.width() + 10 + 'px',
+        }).show();
+    }
+
+    function hideOutline(){
+        jOutline.hide();
+    }
+});
+  </script>
+  
+
+
+<script src="./应用程序内存使用跟踪之内存泄露调查篇_files/MathJax.js"></script>
+  <script type="text/x-mathjax-config;executed=true">
+  MathJax.Hub.Config({
+    jax: ["input/TeX","output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['\\$','\\$'], ["\\(","\\)"], ['$', '$'] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    displayAlign: "center"
+  });
+  </script>
+    <a href="http://www.atatech.org/articles/50146#" class="go-top" style="display: block;"><span class="glyphicon glyphicon-arrow-up"></span></a>
+<script>require('module/go-top')</script>        <a href="https://work.alibaba-inc.com/work/group/8401" target="_blank" title="为ATA2.0提供反馈" style="position:fixed;right:0;bottom:200px;" class="hidden-xs">
+  <img src="./应用程序内存使用跟踪之内存泄露调查篇_files/T17D1tFrVeXXcUfo_w-30-100.png" alt="">
+</a>
+
+        <script type="text/javascript">
+    $('.form-submit-btn').click(function(){
+      var form = $(this).parents('form');
+      form.find('input').focus();
+      form.submit();
+    });
+    //导航 dropdown
+    (function(){
+    var t;
+    $('.dropdown').hover(function(){
+      var that = $(this);
+      that.siblings().find('.dropdown-menu').hide();
+      that.children('.dropdown-menu').show();
+      clearTimeout(t);
+    }, function(){
+      var that = $(this);
+      t = setTimeout(function(){
+        that.children('.dropdown-menu').hide();
+      }, 500)
+      
+    })
+    }())
+    </script>
+  
+
+<div class="alert-container"></div><div id="article-outline" style="display: none; position: fixed; top: 0px;"><div style="height:15px;"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button></div></div><style>#article-outline{display:none;min-width:140p;max-width: 200px; max-height: 350px;position:absolute;top:150px;left:-999px;border:1px solid #ccc;box-shadow:5px 5px 2px #ccc;padding: 5px 10px;background-color: #fff;overflow-y: auto;scroll-x: auto;}#article-outline ul{margin:5px 0 5px 0;padding-left:30px;font-size:12px;border-left:1px dotted #ccc;}#article-outline ul:first-child{padding-left:15px;border:none;}#article-outline li{list-style-type:decimal;margin:3px 0;}</style></body></html>

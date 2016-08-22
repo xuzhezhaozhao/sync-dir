@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+if [ "X$CC_WRAPPER_HOME" != "X" ];
+then
+    if [ "$CCACHE" != "yes" ];
+    then
+        export HOME=$CC_WRAPPER_HOME
+        distcc $*
+    else
+        export HOME=$CC_WRAPPER_HOME
+        export set CCACHE_PREFIX=distcc 
+        ccache $*
+    fi
+
+else
+    if [ "$CCACHE" != "yes" ];
+    then
+        cmd=$(echo "$* -finstrument-functions"|sed 's/-Werror//')
+        echo "3. $cmd"
+        eval $cmd
+    else
+       ccache $*
+    fi
+fi
