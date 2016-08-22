@@ -3,12 +3,13 @@
 set -e
 
 #threads=( 1 2 4 8 16 32 64 128 256 )
-threads=( 512 1024 )
-mods=( "write" "seq" "rand" )
-runtime=100
+threads=( 1024 )
+#mods=( "write" "seq" "rand" )
+mods=( "write" )
+runtime=1000
 for thread in ${threads[@]}
 do
-    for (( block=4*1024; block<=4*1024*1024; block=block*2 ))
+    for (( block=4*1024; block<=4*1024; block=block*2 ))
     do
         for mod in ${mods[@]}
         do

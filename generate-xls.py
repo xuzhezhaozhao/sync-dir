@@ -121,7 +121,6 @@ def generate_xls_for_pangu(thread, runtime = 60, row = 0, col = 0, singlenode = 
             # thoughput
             thoughput = float(line.split()[2]) / 1024 / 1024
             sheet.write(row, col+1, thoughput)
-            col += 1
         elif c == 4:
             # qps
             qps = float(line.split()[2])
