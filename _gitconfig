@@ -1,0 +1,18 @@
+[user]
+	name = xuzhezhao
+	email = zhezhaoxu@gmail.com
+[credential]
+	helper = cache
+
+[alias]
+	hist = log --pretty=format:\"%C(auto)%h %ad | %C(auto)%s%d  %Cblue(%an)\" --graph --date=short
+	bar = log --graph --oneline --decorate
+[core]
+	editor = gvim
+[http]
+	sshVerify = false
+	sslverify = false
+[merge]
+	tool = meld
+[push]
+	default = simple
