@@ -1,0 +1,45 @@
+alias cls=clear
+alias clc=clear
+alias ls='ls --color=auto'
+alias ll='ls -al --color=auto'
+alias grep='grep --color=auto'
+
+alias q=exit
+
+alias eclipse=~/eclipse/eclipse
+
+#export PATH="/home/zhangc/hm/bin/:/home/zhangbl/clang/bin/:$HOME/bin:/usr/local/MATLAB/R2012a/bin:$PATH"
+export PATH="$HOME/bin:/usr/local/MATLAB/R2012a/bin:$PATH"
+export PATH="$HOME/clang/bin:$PATH"
+export PATH="$HOME/.cmake/bin:$PATH"
+#export PATH="/home/zhangbl/clang/bin/:$HOME/bin:/usr/local/MATLAB/R2012a/bin:$PATH"
+
+#export LD_LIBRARY_PATH=/home/zhangc/hm/lib/:/home/zhangc/hm/lib32/:/home/zhangc/hm/lib64/:/home/zhangbl/clang/lib/:/home/zhangbl/lib/:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/home/zhangbl/clang/lib/:/home/zhangbl/lib/:$LD_LIBRARY_PATH
+export JAVA_HOME=~/.jdk1.8.0/;
+export JRE_HOME=${JAVA_HOME}/jre
+export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
+export PATH=${JAVA_HOME}/bin:$PATH
+
+export LD_LIBRARY_PATH=~/lib/:/lib64/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=~/lib/llvm-3.5/lib:$LD_LIBRARY_PATH
+export LD_PRELOAD=$LD_PRELOAD:~/lib/libear.so
+alias gvim='$HOME/bin/vim -g --servername 104 2>/dev/null'
+#alias vim='$HOME/bin/vim -g --servername 104 2>/dev/null'
+#alias vi='$HOME/bin/vim -g --servername 104 2>/dev/null'
+
+alias gits='git status'
+
+export PATH="$HOME/.usr/local/bin:$PATH"
+export PATH="$HOME/.usr/local/:$PATH"
+export LD_LIBRARY_PATH=/home/xuzz/.usr/local/lib:$LD_LIBRARY_PATH
+export C_INCLUDE_PATH=/home/xuzz/.usr/local/include:$C_INCLUDE_PATH
+export CPLUS_INCLUDE_PATH=/home/xuzz/.usr/local/include:$C_INCLUDE_PATH
+
+alias rrm='/bin/rm'
+
+alias mrun='matlab -nodesktop -nosplash -r'
+
+INSTALLS=/home/xuzz/hm
+export PATH=$INSTALLS/openmpi-1.4.3/bin:$PATH
+export LD_LIBRARY_PATH=$INSTALLS/openmpi-1.4.3/lib:$LD_LIBRARY_PATH
